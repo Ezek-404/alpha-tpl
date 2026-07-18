@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\CocController; // Inimport ang CocController
+use App\Http\Controllers\CocController; 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,8 +13,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard Route
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
-    // COC Management Route (Bagong Dagdag)
+    // COC Management Route
     Route::get('/coc-management', [CocController::class, 'index'])->name('coc.index');
+    Route::post('/coc-management', [CocController::class, 'store'])->name('coc.store');
+    Route::get('/check-coc-availability', [CocController::class, 'checkAvailability']);
+    Route::delete('/coc-management/delete-series', [CocController::class, 'deleteSeries']);
     
 });
 
