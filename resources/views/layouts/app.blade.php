@@ -19,16 +19,16 @@
             @include('layouts.navigation')
 
             <!-- Page Heading -->
-            @isset($header)
-                <header class="bg-white dark:bg-gray-800 shadow">
+            @if (isset($header))
+                <header class="bg-[#161b22] border-b border-[#30363d]">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
                 </header>
-            @endisset
+            @endif
 
             <!-- Page Content -->
-            <main>
+            <main class="pt-6">
                 {{ $slot }}
             </main>
         </div>
