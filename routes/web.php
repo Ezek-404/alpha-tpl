@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CocController; 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CtplIssuanceController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -18,6 +19,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/coc-management', [CocController::class, 'store'])->name('coc.store');
     Route::get('/check-coc-availability', [CocController::class, 'checkAvailability']);
     Route::delete('/coc-management/delete-series', [CocController::class, 'deleteSeries']);
+
+    //CTPL Route
+    Route::get('/ctpl-issuance', [CtplIssuanceController::class, 'create'])->name('ctpl.issuance');
+    Route::post('/ctpl-issuance', [CtplIssuanceController::class, 'store'])->name('ctpl.issuance.store');
     
 });
 
