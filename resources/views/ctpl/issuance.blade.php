@@ -1,15 +1,14 @@
 <x-app-layout>
     <style>
         html, body {
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE at Older Edge */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
         html::-webkit-scrollbar, body::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, at Opera */
+            display: none;
         }
     </style>
 
-    <!-- Isinama na natin ang form fields sa x-data para sa realtime frontend validation -->
     <div class="py-6 bg-[#0d1117] min-h-screen text-[#f0f6fc]" 
          x-data="{ 
             assured_name: '',
@@ -30,6 +29,17 @@
             agent: '',
             amount: '',
 
+            // API Check states para sa COC Validation
+            cocError: '',
+            cocValidating: false,
+            isCocVerified: false,
+
+            // BAGONG DAGDAG: API Check states para sa Policy Validation
+            policyError: '',
+            policyValidating: false,
+            isPolicyVerified: false,
+            policyTimeout: null,
+
             denominations: {
                 'MC': ['MC', 'MTC'],
                 'PC': ['Car', 'Passenger Car', 'Sedan', 'Hatchback', 'Utility Vehicle', 'Coupe', 'SUV'],
@@ -37,7 +47,83 @@
                 'CV': ['Truck', 'Trailer']
             },
 
-            // Validation para i-unlock ang Section 3
+            // Filter para pure numbers lang ang pumasok
+            filterNumbers(field) {
+                this[field] = this[field].replace(/[^0-9]/g, '');
+                
+                // Kapag COC ang binago, i-reset ang server validation state nito
+                if(field === 'coc_no') {
+                    this.isCocVerified = false;
+                    this.cocError = '';
+                    if(this.coc_no.length === 8) {
+                        this.checkCocAvailability();
+                    }
+                }
+
+                // BAGONG DAGDAG: Realtime validation para sa Policy Number gamit ang debounce (500ms)
+                if(field === 'policy_no') {
+                    this.isPolicyVerified = false;
+                    this.policyError = '';
+                    
+                    clearTimeout(this.policyTimeout);
+                    if(this.policy_no.trim() !== '') {
+                        this.policyTimeout = setTimeout(() => {
+                            this.checkPolicyUniqueness();
+                        }, 500);
+                    }
+                }
+            },
+
+            // Realtime backend check gamit ang Fetch API para sa COC
+            checkCocAvailability() {
+                if(this.coc_no.length !== 8 || !this.vehicleType) return;
+                
+                this.cocValidating = true;
+                this.cocError = '';
+                
+                fetch(`/api/validate-coc?coc_no=${this.coc_no}&classification=${this.vehicleType}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        this.cocValidating = false;
+                        if(data.valid) {
+                            this.isCocVerified = true;
+                            this.cocError = '';
+                        } else {
+                            this.isCocVerified = false;
+                            this.cocError = data.message;
+                        }
+                    })
+                    .catch(() => {
+                        this.cocValidating = false;
+                        this.cocError = 'Error connecting to validation server.';
+                    });
+            },
+
+            // BAGONG DAGDAG: Realtime backend check gamit ang Fetch API para sa Policy
+            checkPolicyUniqueness() {
+                if(this.policy_no.trim() === '') return;
+                
+                this.policyValidating = true;
+                this.policyError = '';
+                
+                fetch(`/api/validate-policy?policy_no=${this.policy_no}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        this.policyValidating = false;
+                        if(data.valid) {
+                            this.isPolicyVerified = true;
+                            this.policyError = '';
+                        } else {
+                            this.isPolicyVerified = false;
+                            this.policyError = data.message;
+                        }
+                    })
+                    .catch(() => {
+                        this.policyValidating = false;
+                        this.policyError = 'Error connecting to validation server.';
+                    });
+            },
+
             isSection1And2Valid() {
                 return this.assured_name.trim() !== '' &&
                        this.address.trim() !== '' &&
@@ -53,23 +139,20 @@
                        this.engine_no.trim() !== '';
             },
 
-            // Validation para sa Submit Button (Buong Form)
             isFormValid() {
                 return this.isSection1And2Valid() &&
-                       this.coc_no.trim() !== '' &&
-                       this.policy_no.trim() !== '' &&
-                       this.agent.trim() !== '' &&
-                       this.amount !== '';
+                    this.isCocVerified &&
+                    this.isPolicyVerified && // INAYOS: Dapat verified at unique ang policy mula sa database
+                    this.agent.trim() !== '' &&
+                    this.amount !== '';
             }
          }">
         <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8">
             
-            <!-- Header -->
             <div class="mb-6">
                 <h2 class="text-xl font-bold tracking-tight">CTPL Insurance Issuance</h2>
             </div>
 
-            <!-- Dynamic Asymmetric Grid Form -->
             <form action="/ctpl-issuance" method="POST" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 @csrf
 
@@ -77,14 +160,12 @@
                 <div class="lg:col-span-3 bg-[#161b22] border border-[#30363d] rounded-xl p-5 shadow-xl space-y-4 min-h-[460px]">
                     <h3 class="text-sm font-semibold border-b border-[#30363d] pb-2 text-[#58a6ff]">1. Assured Details</h3>
                     
-                    <!-- Assured Name -->
                     <div>
                         <label class="block text-xs text-gray-400 mb-1 font-medium">Assured Name</label>
                         <input type="text" name="assured" x-model="assured_name" maxlength="100" required placeholder="JUANA DELA CRUZ" 
                             class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] uppercase">
                     </div>
 
-                    <!-- Address -->
                     <div>
                         <label class="block text-xs text-gray-400 mb-1 font-medium">Address</label>
                         <textarea name="address" x-model="address" maxlength="100" rows="7" required placeholder="Complete Address" 
@@ -97,10 +178,9 @@
                     <h3 class="text-sm font-semibold border-b border-[#30363d] pb-2 text-[#58a6ff]">2. Vehicle Specification</h3>
                     
                     <div class="grid grid-cols-2 gap-4">
-                        <!-- Vehicle Classification -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Classification</label>
-                            <select name="vehicle_type" x-model="vehicleType" @change="denomination = ''" required 
+                            <select name="vehicle_type" x-model="vehicleType" @change="denomination = ''; isCocVerified = false; checkCocAvailability();" required 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-[#58a6ff]">
                                 <option value="" disabled selected>Select Class...</option>
                                 <option value="MC">Motorcycle (MC)</option>
@@ -110,7 +190,6 @@
                             </select>
                         </div>
 
-                        <!-- Denomination Dropdown -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Denomination</label>
                             <select name="denomination" x-model="denomination" :disabled="!vehicleType" required 
@@ -126,25 +205,21 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <!-- Year Model (Min 1900, Max 2100) -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Year Model</label>
                             <input type="number" name="year_model" x-model="year_model" min="1900" max="2100" required placeholder="e.g. 2026" 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff]">
                         </div>
-                        <!-- Make -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Make</label>
                             <input type="text" name="make" x-model="make" maxlength="50" required placeholder="TOYOTA" 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] uppercase">
                         </div>
-                        <!-- Series -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Series</label>
                             <input type="text" name="series" x-model="series" maxlength="50" required placeholder="VIOS" 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] uppercase">
                         </div>
-                        <!-- Color -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Color</label>
                             <input type="text" name="color" x-model="color" maxlength="50" required placeholder="BLACK" 
@@ -153,25 +228,21 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <!-- MV File (Max 15) -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">MV File</label>
                             <input type="text" name="mv_file" x-model="mv_file" maxlength="15" required placeholder="MV FILE NO." 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] uppercase">
                         </div>
-                        <!-- Plate Number (Max 7) -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Plate Number</label>
                             <input type="text" name="plate_no" x-model="plate_no" maxlength="7" required placeholder="PLATE NO." 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] uppercase">
                         </div>
-                        <!-- Chassis Number (Max 30) -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Chassis Number</label>
                             <input type="text" name="chassis_no" x-model="chassis_no" maxlength="30" required placeholder="CHASSIS NO." 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] uppercase">
                         </div>
-                        <!-- Engine Number (Max 30) -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Engine Number</label>
                             <input type="text" name="engine_no" x-model="engine_no" maxlength="30" required placeholder="ENGINE NO." 
@@ -180,7 +251,7 @@
                     </div>
                 </div>
 
-                <!-- COLUMN 3: Allocation and Payment (May conditional style at locking base sa evaluation) -->
+                <!-- COLUMN 3: Allocation and Payment -->
                 <div class="lg:col-span-4 bg-[#161b22] border border-[#30363d] rounded-xl p-5 shadow-xl space-y-4 min-h-[460px] flex flex-col justify-between transition-opacity duration-300"
                      :class="!isSection1And2Valid() ? 'opacity-40 select-none' : ''">
                     <div class="space-y-4">
@@ -191,18 +262,30 @@
                             3. Allocation and Payment
                         </h3>
 
-                        <!-- COC Number (Naka-lock kapag hindi valid ang section 1 at 2) -->
+                        <!-- COC Number (Pure Numbers, Max 8) -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">COC Number</label>
-                            <input type="text" name="coc_no" x-model="coc_no" :disabled="!isSection1And2Valid()" required placeholder="COC-1234567" 
-                                class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] uppercase disabled:cursor-not-allowed">
+                            <input type="text" name="coc_no" x-model="coc_no" @input="filterNumbers('coc_no')" maxlength="8" :disabled="!isSection1And2Valid()" required placeholder="e.g. 12345678" 
+                                class="w-full bg-[#0d1117] text-[#f0f6fc] border rounded-lg px-3 py-2 text-xs focus:outline-none disabled:cursor-not-allowed"
+                                :class="cocError ? 'border-red-500 focus:border-red-500' : (isCocVerified ? 'border-green-500 focus:border-green-500' : 'border-[#30363d] focus:border-[#58a6ff]')">
+                            
+                            <!-- Realtime Feedback Messages -->
+                            <p x-show="cocValidating" class="text-[10px] text-yellow-500 mt-1">Verifying availability...</p>
+                            <p x-show="cocError" x-text="cocError" class="text-[10px] text-red-500 mt-1"></p>
+                            <p x-show="isCocVerified" class="text-[10px] text-green-500 mt-1">✓ COC is valid and available for this vehicle type.</p>
                         </div>
 
                         <!-- Policy Number -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Policy Number</label>
-                            <input type="text" name="policy_no" x-model="policy_no" :disabled="!isSection1And2Valid()" required placeholder="3414874" 
-                                class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] disabled:cursor-not-allowed">
+                            <input type="text" name="policy_no" x-model="policy_no" @input="filterNumbers('policy_no')" maxlength="8" :disabled="!isSection1And2Valid()" required placeholder="e.g. 976503" 
+                                class="w-full bg-[#0d1117] text-[#f0f6fc] border rounded-lg px-3 py-2 text-xs focus:outline-none disabled:cursor-not-allowed"
+                                :class="policyError ? 'border-red-500 focus:border-red-500' : (isPolicyVerified ? 'border-green-500 focus:border-green-500' : 'border-[#30363d] focus:border-[#58a6ff]')">
+                            
+                            <!-- Realtime Feedback Messages para sa Policy -->
+                            <p x-show="policyValidating" class="text-[10px] text-yellow-500 mt-1">Checking policy availability...</p>
+                            <p x-show="policyError" x-text="policyError" class="text-[10px] text-red-500 mt-1"></p>
+                            <p x-show="isPolicyVerified" class="text-[10px] text-green-500 mt-1">✓ Policy number is available and unique.</p>
                         </div>
 
                         <!-- Agent Name -->
@@ -223,7 +306,6 @@
                         </div>
                     </div>
 
-                    <!-- Submit Button with conditional style and dynamic status -->
                     <div class="pt-4">
                         <button type="submit" :disabled="!isFormValid()"
                                 class="w-full py-2 rounded-lg text-xs font-semibold transition shadow-md text-white

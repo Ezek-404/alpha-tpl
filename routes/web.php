@@ -23,6 +23,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //CTPL Route
     Route::get('/ctpl-issuance', [CtplIssuanceController::class, 'create'])->name('ctpl.issuance');
     Route::post('/ctpl-issuance', [CtplIssuanceController::class, 'store'])->name('ctpl.issuance.store');
+    Route::get('/api/validate-coc', [CtplIssuanceController::class, 'validateCoc']);
+    Route::get('/api/validate-policy', [CtplIssuanceController::class, 'validatePolicy']);
     
 });
 
