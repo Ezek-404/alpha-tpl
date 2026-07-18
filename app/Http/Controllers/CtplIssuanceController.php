@@ -12,6 +12,25 @@ class CtplIssuanceController extends Controller
         return view('ctpl.issuance');
     }
 
+    public function index(Request $request)
+    {
+        $query = Transaction::query(); // O kung anong model ang gamit mo
+
+        // Dito nangyayari ang filtering
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('assured', 'like', '%' . $search . '%')
+                ->orWhere('coc_no', 'like', '%' . $search . '%')
+                ->orWhere('plate_no', 'like', '%' . $search . '%');
+            });
+        }
+
+        $logs = $query->latest()->paginate(10)->withQueryString();
+
+        return view('pangalan-ng-view-mo', compact('logs'));
+    }
+
     public function validateCoc(Request $request)
     {
         try {
@@ -102,5 +121,29 @@ class CtplIssuanceController extends Controller
     public function store(Request $request)
     {
         // Dito natin ilalagay ang logic ng pag-save mamaya
+    }
+
+    public function logs(Request $request)
+    {
+        $search = trim($request->query('search'));
+        $query = DB::table('ctpl_issuances');
+
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('assured', 'LIKE', '%' . $search . '%')
+                ->orWhere('agent', 'LIKE', '%' . $search . '%')
+                ->orWhere('coc_no', 'LIKE', '%' . $search . '%')
+                ->orWhere('plate_no', 'LIKE', '%' . $search . '%')
+                ->orWhere('mv_file', 'LIKE', '%' . $search . '%');
+            });
+        }
+
+        $logs = $query->orderBy('created_at', 'desc')
+                    ->paginate(10) // Siguraduhin na 10 ito
+                    ->withQueryString();
+
+        // IBALIK ANG BUONG VIEW (KASAMA ANG PAGINATION)
+        // Kapag ginamit ng fetch(), ang buong HTML na ito ang ipapalit sa #logs-container
+        return view('ctpl.logs', compact('logs'));
     }
 }

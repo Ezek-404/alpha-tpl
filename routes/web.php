@@ -25,6 +25,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/ctpl-issuance', [CtplIssuanceController::class, 'store'])->name('ctpl.issuance.store');
     Route::get('/api/validate-coc', [CtplIssuanceController::class, 'validateCoc']);
     Route::get('/api/validate-policy', [CtplIssuanceController::class, 'validatePolicy']);
+
+    //Transaction Logs Route
+    Route::get('/transaction-logs', [CtplIssuanceController::class, 'logs'])->name('ctpl.logs');
     
 });
 

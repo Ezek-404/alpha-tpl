@@ -28,7 +28,7 @@
                     </x-nav-link>
 
                     <!-- Transaction Logs Link -->
-                    <x-nav-link :href="'#'" :active="false" class="text-gray-400 hover:text-[#f0f6fc]">
+                    <x-nav-link :href="route('ctpl.logs')" :active="request()->routeIs('ctpl.logs')" class="text-gray-400 hover:text-[#f0f6fc]">
                         {{ __('Transaction Logs') }}
                     </x-nav-link>
                 </div>
@@ -93,7 +93,7 @@
             <x-responsive-nav-link :href="route('ctpl.issuance')" :active="request()->routeIs('ctpl.issuance')" class="text-gray-300 hover:text-[#f0f6fc]">
                 {{ __('CTPL Issuance') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="'#'" :active="false" class="text-gray-300 hover:text-[#f0f6fc]">
+            <x-responsive-nav-link :href="route('ctpl.logs')" :active="request()->routeIs('ctpl.logs')" class="text-gray-300 hover:text-[#f0f6fc]">
                 {{ __('Transaction Logs') }}
             </x-responsive-nav-link>
         </div>
