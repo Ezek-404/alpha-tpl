@@ -5,10 +5,13 @@
         const response = await fetch(`/transaction-logs?search=${this.search}`);
         const html = await response.text();
         
-        // I-parse ang buong HTML response at i-replace ang buong container
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
-        document.getElementById('logs-container').innerHTML = doc.getElementById('logs-container').innerHTML;
+        
+        // Huwag palitan ang buong container para hindi mawala ang focus sa input
+        // Palitan lang natin ang mga parte na nagbabago (Table at Pagination)
+        document.getElementById('logs-table-content').innerHTML = doc.getElementById('logs-table-content').innerHTML;
+        document.getElementById('logs-pagination').innerHTML = doc.getElementById('logs-pagination').innerHTML;
     }
 }" class="bg-[#161b22] border border-[#30363d] rounded-xl shadow-lg overflow-hidden">
 
@@ -22,7 +25,7 @@
     </div>
 
     <!-- Table -->
-    <div class="overflow-x-auto">
+    <div id="logs-table-content" class="overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[700px]">
             <thead>
                 <tr class="border-b border-[#30363d] bg-[#161b22]">
@@ -52,16 +55,14 @@
                     </td>
                 </tr>
                 @empty
-                <tr>
-                    <td colspan="6" class="px-6 py-6 text-center text-xs text-gray-400">No records found.</td>
-                </tr>
+                <tr><td colspan="6" class="px-6 py-6 text-center text-xs text-gray-400">No records found.</td></tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
     <!-- Pagination na mag-a-adjust na ngayon -->
-    <div class="px-6 py-3 border-t border-[#30363d] bg-[#0d1117] custom-pagination-container">
+    <div id="logs-pagination" class="px-6 py-3 border-t border-[#30363d] bg-[#0d1117] custom-pagination-container">
         {{ $logs->links() }}
     </div>
 </div>

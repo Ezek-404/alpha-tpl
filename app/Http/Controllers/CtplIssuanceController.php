@@ -126,11 +126,12 @@ class CtplIssuanceController extends Controller
     public function logs(Request $request)
     {
         $search = trim($request->query('search'));
+        
         $query = DB::table('ctpl_issuances');
 
         if (!empty($search)) {
             $query->where(function($q) use ($search) {
-                $q->where('assured', 'LIKE', '%' . $search . '%')
+                $q->where('assured', 'LIKE', '%' . $search . '%') // Dito ito mahahanap
                 ->orWhere('agent', 'LIKE', '%' . $search . '%')
                 ->orWhere('coc_no', 'LIKE', '%' . $search . '%')
                 ->orWhere('plate_no', 'LIKE', '%' . $search . '%')
@@ -138,12 +139,8 @@ class CtplIssuanceController extends Controller
             });
         }
 
-        $logs = $query->orderBy('created_at', 'desc')
-                    ->paginate(10) // Siguraduhin na 10 ito
-                    ->withQueryString();
+        $logs = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
-        // IBALIK ANG BUONG VIEW (KASAMA ANG PAGINATION)
-        // Kapag ginamit ng fetch(), ang buong HTML na ito ang ipapalit sa #logs-container
         return view('ctpl.logs', compact('logs'));
     }
 }
