@@ -13,23 +13,55 @@ class CtplIssuanceController extends Controller
         return view('ctpl.issuance');
     }
 
-    public function index(Request $request)
+    public function searchVehicle(Request $request)
     {
-        $query = Transaction::query(); // O kung anong model ang gamit mo
+        $type = $request->query('type'); // plate_no, file_no, chassis_no, engine_no, assured, address
+        $value = $request->query('value');
 
-        // Dito nangyayari ang filtering
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('assured', 'like', '%' . $search . '%')
-                ->orWhere('coc_no', 'like', '%' . $search . '%')
-                ->orWhere('plate_no', 'like', '%' . $search . '%');
-            });
+        if (!$value) {
+            return response()->json(['success' => false, 'message' => 'Invalid parameters.']);
         }
 
-        $logs = $query->latest()->paginate(10)->withQueryString();
+        try {
+            // Simulan sa 'vehicles' table para lumabas ang lahat ng sasakyan kahit wala pang ctpl_issuances record
+            $query = DB::table('vehicles')
+                        ->leftJoin('ctpl_issuances', 'vehicles.vehicle_id', '=', 'ctpl_issuances.vehicle_id');
 
-        return view('pangalan-ng-view-mo', compact('logs'));
+            // Piliin ang mga kolum (gamitin ang latest o kung ano ang meron)
+            $query->select('vehicles.*', 'ctpl_issuances.assured', 'ctpl_issuances.address');
+
+            // I-filter depende sa search type
+            if ($type === 'assured') {
+                $query->where('ctpl_issuances.assured', 'LIKE', '%' . $value . '%');
+            } elseif ($type === 'address') {
+                $query->where('ctpl_issuances.address', 'LIKE', '%' . $value . '%');
+            } elseif (in_array($type, ['plate_no', 'file_no', 'engine_no', 'chassis_no'])) {
+                $query->where('vehicles.' . $type, 'LIKE', '%' . $value . '%');
+            } else {
+                $query->where('vehicles.plate_no', 'LIKE', '%' . $value . '%')
+                    ->orWhere('vehicles.file_no', 'LIKE', '%' . $value . '%');
+            }
+
+            $results = $query->limit(10)->get();
+
+            if ($results->isNotEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $results
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No record found.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function validateCoc(Request $request)
@@ -121,7 +153,101 @@ class CtplIssuanceController extends Controller
 
     public function store(Request $request)
     {
-        // Dito natin ilalagay ang logic ng pag-save mamaya
+        // 1. Validate ang mga input galing sa form
+        $validated = $request->validate([
+            'assured'      => 'required|string|max:100',
+            'address'      => 'required|string|max:255',
+            'denomination' => 'required|string|max:50',
+            'year_model'   => 'required|integer|min:1900|max:2100',
+            'make'         => 'required|string|max:50',
+            'series'       => 'required|string|max:50',
+            'color'        => 'required|string|max:50',
+            'mv_file'      => 'required|string|max:20',
+            'plate_no'     => 'required|string|max:20',
+            'chassis_no'   => 'required|string|max:50',
+            'engine_no'    => 'required|string|max:50',
+            'coc_no'       => 'required|digits:8',
+            'policy_no'    => 'required|string|max:20|unique:ctpl_issuances,policy_no',
+            'agent'        => 'required|string|max:50',
+            'amount'       => 'required|numeric|min:0',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // 2. Check kung existing na ang vehicle gamit ang plate_no at file_no
+            $vehicle = DB::table('vehicles')
+                ->where('plate_no', strtoupper($validated['plate_no']))
+                ->where('file_no', strtoupper($validated['mv_file']))
+                ->first();
+
+            // Mga column na kasama lang sa vehicles table mo
+            $vehicleData = [
+                'year_model'   => $validated['year_model'],
+                'make'         => strtoupper($validated['make']),
+                'series'       => strtoupper($validated['series']),
+                'denomination' => $validated['denomination'], // Dito natin ilalagay ang denomination
+                'color'        => strtoupper($validated['color']),
+                'chassis_no'   => strtoupper($validated['chassis_no']),
+                'engine_no'    => strtoupper($validated['engine_no']),
+                'updated_at'   => now(),
+            ];
+
+            if ($vehicle) {
+                // Kung meron na, i-update ang details nito
+                DB::table('vehicles')
+                    ->where('vehicle_id', $vehicle->vehicle_id)
+                    ->update($vehicleData);
+                
+                $vehicleId = $vehicle->vehicle_id;
+            } else {
+                // Kung wala pa, mag-i-insert ng bago
+                $vehicleData['file_no'] = strtoupper($validated['mv_file']);
+                $vehicleData['plate_no'] = strtoupper($validated['plate_no']);
+                $vehicleData['created_at'] = now();
+                
+                $vehicleId = DB::table('vehicles')->insertGetId($vehicleData);
+            }
+
+            // 3. Hanapin ang COC sa coc_table gamit ang coc_no
+            $coc = DB::table('coc_table')->where('coc_no', $validated['coc_no'])->first();
+
+            if (!$coc) {
+                throw new \Exception('The selected COC Number ('.$validated['coc_no'].') does not exist in the database.');
+            }
+
+            // 4. I-save sa ctpl_issuances table
+            DB::table('ctpl_issuances')->insert([
+                'assured'      => strtoupper($validated['assured']),
+                'address'      => strtoupper($validated['address']),
+                'policy_no'    => $validated['policy_no'],
+                'agent'        => strtoupper($validated['agent']),
+                'amount'       => $validated['amount'],
+                'coc_id'       => $coc->coc_id,
+                'vehicle_id'   => $vehicleId,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
+
+            // 5. Baguhin ang status ng COC patungong Used
+            DB::table('coc_table')
+                ->where('coc_id', $coc->coc_id)
+                ->update([
+                    'coc_status' => 'Used',
+                    'updated_at' => now()
+                ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'CTPL Policy successfully issued!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Database Error: ' . $e->getMessage());
+        }
     }
 
     public function logs(Request $request)
@@ -137,7 +263,7 @@ class CtplIssuanceController extends Controller
             ->join('coc_table', 'ctpl_issuances.coc_id', '=', 'coc_table.coc_id')
             ->select(
                 'ctpl_issuances.*', 
-                'vehicles.assured', 
+                'ctpl_issuances.assured', // Inilipat na mula sa vehicles patungong ctpl_issuances
                 'vehicles.plate_no', 
                 'vehicles.file_no as mv_file', 
                 'coc_table.coc_no'
@@ -158,11 +284,11 @@ class CtplIssuanceController extends Controller
         // Filter ayon sa search query
         if (!empty($search)) {
             $query->where(function($q) use ($search) {
-                $q->where('vehicles.assured', 'LIKE', '%' . $search . '%')
-                ->orWhere('ctpl_issuances.agent', 'LIKE', '%' . $search . '%')
-                ->orWhere('coc_table.coc_no', 'LIKE', '%' . $search . '%')
-                ->orWhere('vehicles.plate_no', 'LIKE', '%' . $search . '%')
-                ->orWhere('vehicles.file_no', 'LIKE', '%' . $search . '%');
+                $q->where('ctpl_issuances.assured', 'LIKE', '%' . $search . '%') // Binago mula vehicles patungong ctpl_issuances
+                  ->orWhere('ctpl_issuances.agent', 'LIKE', '%' . $search . '%')
+                  ->orWhere('coc_table.coc_no', 'LIKE', '%' . $search . '%')
+                  ->orWhere('vehicles.plate_no', 'LIKE', '%' . $search . '%')
+                  ->orWhere('vehicles.file_no', 'LIKE', '%' . $search . '%');
             });
         }
 

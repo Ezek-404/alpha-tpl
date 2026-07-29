@@ -20,13 +20,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/check-coc-availability', [CocController::class, 'checkAvailability']);
     Route::delete('/coc-management/delete-series', [CocController::class, 'deleteSeries']);
 
-    //CTPL Route
+    // CTPL Route & APIs
     Route::get('/ctpl-issuance', [CtplIssuanceController::class, 'create'])->name('ctpl.issuance');
     Route::post('/ctpl-issuance', [CtplIssuanceController::class, 'store'])->name('ctpl.issuance.store');
+    Route::get('/api/search-vehicle', [CtplIssuanceController::class, 'searchVehicle']); // IDINAGDAG PARA SA LIVE SEARCH
     Route::get('/api/validate-coc', [CtplIssuanceController::class, 'validateCoc']);
     Route::get('/api/validate-policy', [CtplIssuanceController::class, 'validatePolicy']);
 
-    //Transaction Logs Route
+    // Transaction Logs Route
     Route::get('/transaction-logs', [CtplIssuanceController::class, 'logs'])->name('ctpl.logs');
     
 });

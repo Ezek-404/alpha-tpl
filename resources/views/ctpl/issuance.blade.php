@@ -38,12 +38,19 @@
             agent: '',
             amount: '',
 
+            // SEARCH STATES
+            searchType: 'plate_no',
+            searchValue: '',
+            isSearching: false,
+            searchResults: [],
+            searchError: '',
+
             // API Check states para sa COC Validation
             cocError: '',
             cocValidating: false,
             isCocVerified: false,
 
-            // BAGONG DAGDAG: API Check states para sa Policy Validation
+            // API Check states para sa Policy Validation
             policyError: '',
             policyValidating: false,
             isPolicyVerified: false,
@@ -51,9 +58,9 @@
 
             denominations: {
                 'MC': ['MC', 'MTC'],
-                'PC': ['Car', 'Passenger Car', 'Sedan', 'Hatchback', 'Utility Vehicle', 'Coupe', 'SUV'],
-                'TC': ['Tricycle'],
-                'CV': ['Truck', 'Trailer']
+                'PC': ['CAR', 'PASSENGER CAR', 'SEDAN', 'HATCHBACK', 'UTILITY VEHICLE', 'COUPE', 'SUV'],
+                'TC': ['TRICYCLE'],
+                'CV': ['TRUCK', 'TRAILER']
             },
 
             // Filter para pure numbers lang ang pumasok
@@ -69,7 +76,7 @@
                     }
                 }
 
-                // BAGONG DAGDAG: Realtime validation para sa Policy Number gamit ang debounce (500ms)
+                // Realtime validation para sa Policy Number gamit ang debounce (500ms)
                 if(field === 'policy_no') {
                     this.isPolicyVerified = false;
                     this.policyError = '';
@@ -108,7 +115,7 @@
                     });
             },
 
-            // BAGONG DAGDAG: Realtime backend check gamit ang Fetch API para sa Policy
+            // Realtime backend check gamit ang Fetch API para sa Policy
             checkPolicyUniqueness() {
                 if(this.policy_no.trim() === '') return;
                 
@@ -133,6 +140,67 @@
                     });
             },
 
+            // Search kapag pinindot ang Enter o Search button
+            executeSearch() {
+                let val = this.searchValue.trim();
+                if(!val) {
+                    this.searchError = 'Please enter a value to search.';
+                    return;
+                }
+
+                this.isSearching = true;
+                this.searchError = '';
+                this.searchResults = [];
+
+                fetch(`/api/search-vehicle?type=${this.searchType}&value=${val}`)
+                    .then(res => res.json())
+                    .then(res => {
+                        this.isSearching = false;
+                        if(res.success && Array.isArray(res.data)) {
+                            if(res.data.length === 0) {
+                                this.searchError = 'No vehicle found.';
+                            } else {
+                                this.searchResults = res.data;
+                            }
+                        } else {
+                            this.searchError = 'No vehicle found.';
+                        }
+                    })
+                    .catch(() => {
+                        this.isSearching = false;
+                        this.searchError = 'Error connecting to search server.';
+                    });
+            },
+
+            // Function para piliin ang sasakyan at i-autofill ang form
+            selectVehicle(d) {
+                this.assured_name  = d.assured || '';
+                this.address       = d.address || '';
+                this.denomination  = d.denomination || '';
+                this.year_model    = d.year_model || '';
+                this.make          = d.make || '';
+                this.series        = d.series || '';
+                this.color         = d.color || '';
+                this.mv_file       = d.file_no || d.mv_file || '';
+                this.plate_no      = d.plate_no || '';
+                this.chassis_no    = d.chassis_no || '';
+                this.engine_no     = d.engine_no || '';
+
+                // Auto-detect Classification base sa Denomination kung available
+                if (d.denomination) {
+                    for (let classKey in this.denominations) {
+                        if (this.denominations[classKey].includes(d.denomination.toUpperCase())) {
+                            this.vehicleType = classKey;
+                            break;
+                        }
+                    }
+                }
+
+                // Linisin ang search states pagkatapos pumili
+                this.searchResults = [];
+                this.searchValue = '';
+            },
+
             isSection1And2Valid() {
                 return this.assured_name.trim() !== '' &&
                        this.address.trim() !== '' &&
@@ -151,15 +219,59 @@
             isFormValid() {
                 return this.isSection1And2Valid() &&
                     this.isCocVerified &&
-                    this.isPolicyVerified && // INAYOS: Dapat verified at unique ang policy mula sa database
+                    this.isPolicyVerified && 
                     this.agent.trim() !== '' &&
                     this.amount !== '';
             }
          }">
         <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8">
-            
-            <div class="mb-6">
-                <h2 class="text-xl font-bold tracking-tight">CTPL Insurance Issuance</h2>
+
+            <!-- Quick Vehicle Search Card (Enter-to-Search) -->
+            <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-4 shadow-xl mb-6">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Quick Vehicle Search & Autofill</h3>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <select x-model="searchType" class="bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] sm:w-1/4">
+                        <option value="plate_no">Plate Number</option>
+                        <option value="file_no">MV File Number</option>
+                        <option value="chassis_no">Chassis Number</option>
+                        <option value="engine_no">Engine Number</option>
+                    </select>
+
+                    <div class="flex-grow">
+                        <input type="text" x-model="searchValue" 
+                            autofocus
+                            @keydown.enter.prevent="executeSearch()"
+                            placeholder="Enter value and press Enter..." 
+                            class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] uppercase">
+                    </div>
+
+                    <button type="button" @click="executeSearch()" 
+                            class="bg-[#21262d] hover:bg-[#30363d] text-[#f0f6fc] border border-[#30363d] px-4 py-2 rounded-lg text-xs font-semibold transition">
+                        Search
+                    </button>
+                </div>
+
+                <!-- Loading / Error Feedbacks -->
+                <p x-show="isSearching" class="text-xs text-yellow-500 mt-2">Searching vehicle...</p>
+                <p x-show="searchError" x-text="searchError" class="text-xs text-red-500 mt-2"></p>
+
+                <!-- Search Results List kung saan pwede mamili -->
+                <div x-show="searchResults.length > 0" class="mt-3 border-t border-[#30363d] pt-3">
+                    <p class="text-xs text-gray-400 mb-2">Select a vehicle to autofill the form:</p>
+                    <div class="space-y-2 max-h-48 overflow-y-auto">
+                        <template x-for="item in searchResults" :key="item.vehicle_id || item.plate_no">
+                            <div @click="selectVehicle(item)" 
+                                 class="bg-[#0d1117] border border-[#30363d] hover:border-[#58a6ff] p-2.5 rounded-lg cursor-pointer flex justify-between items-center transition">
+                                <div>
+                                    <span class="font-bold text-[#58a6ff]" x-text="item.plate_no || item.file_no"></span> 
+                                    <span class="text-gray-300 ml-2" x-text="(item.make || '') + ' ' + (item.series || '')"></span>
+                                    <span class="text-gray-500 text-[10px] block" x-text="'Assured: ' + (item.assured || 'N/A')"></span>
+                                </div>
+                                <span class="text-[10px] bg-[#238636] text-white px-2.5 py-1 rounded font-medium">Select</span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
             </div>
 
             <form action="/ctpl-issuance" method="POST" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -177,8 +289,8 @@
 
                     <div>
                         <label class="block text-xs text-gray-400 mb-1 font-medium">Address</label>
-                        <input name="address" x-model="address" maxlength="100" rows="7" required placeholder="COMPLETE ADDRESS" 
-                            class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff]">
+                        <input type="text" name="address" x-model="address" maxlength="100" required placeholder="COMPLETE ADDRESS" 
+                            class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] uppercase">
                     </div>
                 </div>
 
@@ -192,10 +304,10 @@
                             <select name="vehicle_type" x-model="vehicleType" @change="denomination = ''; isCocVerified = false; checkCocAvailability();" required 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-[#58a6ff]">
                                 <option value="" disabled selected>Select Class...</option>
-                                <option value="MC">Motorcycle (MC)</option>
-                                <option value="PC">Private Car (PC)</option>
-                                <option value="TC">Tricycle (TC)</option>
-                                <option value="CV">Commercial (CV)</option>
+                                <option value="MC">MOTORCYCLE (MC)</option>
+                                <option value="PC">PRIVATE CAR (PC)</option>
+                                <option value="TC">TRICYCLE (TC)</option>
+                                <option value="CV">COMMERCIAL VEHICLE (CV)</option>
                             </select>
                         </div>
 
