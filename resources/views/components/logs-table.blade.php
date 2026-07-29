@@ -13,9 +13,9 @@
         document.getElementById('logs-table-content').innerHTML = doc.getElementById('logs-table-content').innerHTML;
         document.getElementById('logs-pagination').innerHTML = doc.getElementById('logs-pagination').innerHTML;
     }
-}" class="bg-[#161b22] border border-[#30363d] rounded-xl shadow-lg overflow-hidden">
+}" class="bg-[#161b22] border border-[#30363d] rounded-xl shadow-lg relative">
 
-    <!-- Search & Filter Header Bar (Nakalagay sa KANAN) -->
+    <!-- Search & Filter Header Bar -->
     <div class="p-4 border-b border-[#30363d] flex justify-end items-center relative">
         <div class="flex items-center bg-[#0d1117] border border-[#30363d] rounded-lg overflow-hidden">
             
@@ -43,7 +43,7 @@
             </button>
         </div>
 
-        <!-- Filter Dropdown Box (Popup na katulad sa larawan) -->
+        <!-- Filter Dropdown Box -->
         <div x-show="showFilter" 
              @click.away="showFilter = false"
              x-transition
@@ -57,7 +57,7 @@
                 </button>
             </div>
 
-            <!-- Date Range Inputs (From - To) -->
+            <!-- Date Range Inputs -->
             <div class="space-y-3">
                 <div>
                     <label class="block text-[10px] text-gray-400 mb-1">From Date</label>
@@ -108,7 +108,7 @@
                     </td>
                     <td class="px-6 py-2 text-xs text-gray-400 font-mono">{{ \Carbon\Carbon::parse($log->created_at)->format('Y-m-d H:i') }}</td>
                     <td class="px-6 py-2 text-xs">
-                        <a href="#" class="text-[#58a6ff] hover:underline mr-2">View</a>
+                        <a href="{{ route('ctpl.show', $log->id) }}" class="text-[#58a6ff] hover:underline mr-2">View</a>
                         <a href="#" class="text-[#2ea043] hover:underline">Edit</a>
                     </td>
                 </tr>
@@ -119,20 +119,32 @@
         </table>
     </div>
 
-    <!-- Pagination -->
-    <div id="logs-pagination" class="px-6 py-3 border-t border-[#30363d] bg-[#0d1117] custom-pagination-container">
-        {{ $logs->links() }}
+    <!-- Pagination & Summary Footer (Sinigurong laging kita kahit kakaunti ang record) -->
+    <div id="logs-pagination" class="px-6 py-3 border-t border-[#30363d] bg-[#0d1117] flex flex-col sm:flex-row justify-between items-center text-xs text-gray-400 custom-pagination-container rounded-b-xl">
+        <div class="mb-2 sm:mb-0">
+            Showing 
+            <span class="font-semibold text-gray-200">{{ $logs->firstItem() ?? 0 }}</span> 
+            to 
+            <span class="font-semibold text-gray-200">{{ $logs->lastItem() ?? 0 }}</span> 
+            of 
+            <span class="font-semibold text-gray-200">{{ $logs->total() }}</span> 
+            results
+        </div>
+        <div>
+            {{ $logs->appends(request()->query())->links() }}
+        </div>
     </div>
 </div>
+
 <style>
-    /* Naka-imbak na custom layout parameters */
+    /* Ibinabalik ang summary text sa kaliwa at ginagawang maayos ang pagination links sa kanang bahagi */
     .custom-pagination-container nav > div:first-child {
-        display: none !important;
+        display: none !important; /* Itinatago ang default na "Showing 1 to X..." ng Laravel para mapalitan ng custom natin sa kaliwa kung kinakailangan, o panatilihin kung gusto mo */
     }
 
     .custom-pagination-container nav {
         display: flex !important;
-        justify-content: center !important;
+        justify-content: flex-end !important;
         width: 100% !important;
     }
 
@@ -150,7 +162,7 @@
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        font-size: 11px !important;       
+        font-size: 11px !important;      
         padding: 2px 6px !important;      
         color: #8b949e !important;        
         border-radius: 0px !important;
@@ -172,15 +184,5 @@
     .custom-pagination-container nav svg {
         width: 14px !important;
         height: 14px !important;
-    }
-
-    html, body {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-
-    html::-webkit-scrollbar, 
-    body::-webkit-scrollbar {
-        display: none;
     }
 </style>

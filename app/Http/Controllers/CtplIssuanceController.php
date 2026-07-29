@@ -262,8 +262,8 @@ class CtplIssuanceController extends Controller
             ->join('vehicles', 'ctpl_issuances.vehicle_id', '=', 'vehicles.vehicle_id')
             ->join('coc_table', 'ctpl_issuances.coc_id', '=', 'coc_table.coc_id')
             ->select(
+                'ctpl_issuances.transaction_id as id', // <--- Pinalitan ng 'issuance_id as id'. (Kung sakaling 'id' talaga ang column, tanggalin ito dahil kasama na sa ctpl_issuances.*)
                 'ctpl_issuances.*', 
-                'ctpl_issuances.assured', // Inilipat na mula sa vehicles patungong ctpl_issuances
                 'vehicles.plate_no', 
                 'vehicles.file_no as mv_file', 
                 'coc_table.coc_no'
@@ -284,16 +284,74 @@ class CtplIssuanceController extends Controller
         // Filter ayon sa search query
         if (!empty($search)) {
             $query->where(function($q) use ($search) {
-                $q->where('ctpl_issuances.assured', 'LIKE', '%' . $search . '%') // Binago mula vehicles patungong ctpl_issuances
-                  ->orWhere('ctpl_issuances.agent', 'LIKE', '%' . $search . '%')
-                  ->orWhere('coc_table.coc_no', 'LIKE', '%' . $search . '%')
-                  ->orWhere('vehicles.plate_no', 'LIKE', '%' . $search . '%')
-                  ->orWhere('vehicles.file_no', 'LIKE', '%' . $search . '%');
+                $q->where('ctpl_issuances.assured', 'LIKE', '%' . $search . '%')
+                ->orWhere('ctpl_issuances.agent', 'LIKE', '%' . $search . '%')
+                ->orWhere('coc_table.coc_no', 'LIKE', '%' . $search . '%')
+                ->orWhere('vehicles.plate_no', 'LIKE', '%' . $search . '%')
+                ->orWhere('vehicles.file_no', 'LIKE', '%' . $search . '%');
             });
         }
 
         $logs = $query->orderBy('ctpl_issuances.created_at', 'desc')->paginate(10)->withQueryString();
 
         return view('ctpl.logs', compact('logs', 'from', 'to'));
+    }
+
+    public function showResult($id)
+    {
+        // Kunin ang policy at ang mga detalye ng sasakyan gamit ang transaction_id
+        $policy = DB::table('ctpl_issuances')
+            ->join('vehicles', 'ctpl_issuances.vehicle_id', '=', 'vehicles.vehicle_id')
+            ->join('coc_table', 'ctpl_issuances.coc_id', '=', 'coc_table.coc_id')
+            ->select(
+                'ctpl_issuances.*', 
+                'vehicles.plate_no', 
+                'vehicles.make', 
+                'vehicles.color', 
+                'vehicles.chassis_no', 
+                'vehicles.engine_no', 
+                'vehicles.denomination', // <--- Dito natin binabasa ang uri/klase ng sasakyan
+                'vehicles.file_no as mv_file', 
+                'coc_table.coc_no'
+            )
+            ->where('ctpl_issuances.transaction_id', $id)
+            ->first();
+
+        if (!$policy) {
+            abort(404, 'Policy not found.');
+        }
+        
+        // Kunin at gawing uppercase ang denomination para madaling i-match
+        $deniv = strtoupper(trim($policy->denomination ?? ''));
+        $type = 'result'; // default fallback
+
+        // Logic para sa pagtukoy ng folder batay sa ibinigay mong mapping
+        if (str_contains($deniv, 'MC') || str_contains($deniv, 'MTC')) {
+            $type = 'mc';
+        } elseif (
+            str_contains($deniv, 'CAR') || 
+            str_contains($deniv, 'SEDAN') || 
+            str_contains($deniv, 'PASSENGER') || 
+            str_contains($deniv, 'HATCHBACK') || 
+            str_contains($deniv, 'UTILITY') || 
+            str_contains($deniv, 'SUV') || 
+            str_contains($deniv, 'COUPE')
+        ) {
+            $type = 'pc';
+        } elseif (str_contains($deniv, 'TRICYCLE')) {
+            $type = 'tc';
+        } elseif (str_contains($deniv, 'TRUCK') || str_contains($deniv, 'TRAILER')) {
+            $type = 'cv';
+        }
+
+        // I-check kung umiiral ang view sa tamang folder (resources/views/ctpl/{type}/show.blade.php)
+        $viewName = "ctpl.{$type}.show";
+        
+        if (view()->exists($viewName)) {
+            return view($viewName, compact('policy'));
+        }
+
+        // Fallback kung sakaling wala o hindi pasok sa kategorya
+        return view('ctpl.result', compact('policy'));
     }
 }

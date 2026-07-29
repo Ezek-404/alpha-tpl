@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Transaction Logs Route
     Route::get('/transaction-logs', [CtplIssuanceController::class, 'logs'])->name('ctpl.logs');
+    Route::get('/ctpl-issuance/{id}/result', [CtplIssuanceController::class, 'showResult'])->name('ctpl.show');
     
 });
 
