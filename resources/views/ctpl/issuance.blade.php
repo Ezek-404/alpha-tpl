@@ -7,6 +7,15 @@
         html::-webkit-scrollbar, body::-webkit-scrollbar {
             display: none;
         }
+        /* Pantanggal ng puting background kapag nag-autofill/select ng suggestion */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #0d1117 inset !important;
+            -webkit-text-fill-color: #f0f6fc !important;
+            caret-color: #f0f6fc !important;
+        }
     </style>
 
     <div class="py-6 bg-[#0d1117] min-h-screen text-[#f0f6fc]" 
@@ -168,8 +177,8 @@
 
                     <div>
                         <label class="block text-xs text-gray-400 mb-1 font-medium">Address</label>
-                        <textarea name="address" x-model="address" maxlength="100" rows="7" required placeholder="Complete Address" 
-                            class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] resize-none"></textarea>
+                        <input name="address" x-model="address" maxlength="100" rows="7" required placeholder="COMPLETE ADDRESS" 
+                            class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff]">
                     </div>
                 </div>
 
@@ -207,7 +216,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Year Model</label>
-                            <input type="number" name="year_model" x-model="year_model" min="1900" max="2100" required placeholder="e.g. 2026" 
+                            <input type="number" name="year_model" x-model="year_model" min="1900" max="2100" required placeholder="E.G. 2026" 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff]">
                         </div>
                         <div>
@@ -265,7 +274,7 @@
                         <!-- COC Number (Pure Numbers, Max 8) -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">COC Number</label>
-                            <input type="text" name="coc_no" x-model="coc_no" @input="filterNumbers('coc_no')" maxlength="8" :disabled="!isSection1And2Valid()" required placeholder="e.g. 12345678" 
+                            <input type="text" name="coc_no" x-model="coc_no" @input="filterNumbers('coc_no')" maxlength="8" :disabled="!isSection1And2Valid()" required placeholder="E.G. 12345678" 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border rounded-lg px-3 py-2 text-xs focus:outline-none disabled:cursor-not-allowed"
                                 :class="cocError ? 'border-red-500 focus:border-red-500' : (isCocVerified ? 'border-green-500 focus:border-green-500' : 'border-[#30363d] focus:border-[#58a6ff]')">
                             
@@ -278,7 +287,7 @@
                         <!-- Policy Number -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Policy Number</label>
-                            <input type="text" name="policy_no" x-model="policy_no" @input="filterNumbers('policy_no')" maxlength="8" :disabled="!isSection1And2Valid()" required placeholder="e.g. 976503" 
+                            <input type="text" name="policy_no" x-model="policy_no" @input="filterNumbers('policy_no')" maxlength="8" :disabled="!isSection1And2Valid()" required placeholder="E.G. 976503" 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border rounded-lg px-3 py-2 text-xs focus:outline-none disabled:cursor-not-allowed"
                                 :class="policyError ? 'border-red-500 focus:border-red-500' : (isPolicyVerified ? 'border-green-500 focus:border-green-500' : 'border-[#30363d] focus:border-[#58a6ff]')">
                             
@@ -300,7 +309,7 @@
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Amount Paid (Premium)</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 text-xs">₱</span>
-                                <input type="number" step="0.01" name="amount" x-model="amount" :disabled="!isSection1And2Valid()" required placeholder="1050.00" 
+                                <input type="number" step="0.01" name="amount" x-model="amount" :disabled="!isSection1And2Valid()" required placeholder="1,050.00" 
                                     class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg pl-7 pr-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] disabled:cursor-not-allowed">
                             </div>
                         </div>
