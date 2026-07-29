@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CtplIssuanceController extends Controller
@@ -127,20 +128,46 @@ class CtplIssuanceController extends Controller
     {
         $search = trim($request->query('search'));
         
-        $query = DB::table('ctpl_issuances');
+        // Default sa ngayong araw ang from at to kung walang pinili para mabilis mag-load
+        $from = $request->query('from', Carbon::today()->format('Y-m-d'));
+        $to = $request->query('to', Carbon::today()->format('Y-m-d'));
 
+        $query = DB::table('ctpl_issuances')
+            ->join('vehicles', 'ctpl_issuances.vehicle_id', '=', 'vehicles.vehicle_id')
+            ->join('coc_table', 'ctpl_issuances.coc_id', '=', 'coc_table.coc_id')
+            ->select(
+                'ctpl_issuances.*', 
+                'vehicles.assured', 
+                'vehicles.plate_no', 
+                'vehicles.file_no as mv_file', 
+                'coc_table.coc_no'
+            );
+
+        // Filter ayon sa Date Range (From at To)
+        if (!empty($from) && !empty($to)) {
+            $query->whereBetween('ctpl_issuances.created_at', [
+                $from . ' 00:00:00', 
+                $to . ' 23:59:59'
+            ]);
+        } elseif (!empty($from)) {
+            $query->whereDate('ctpl_issuances.created_at', '>=', $from);
+        } elseif (!empty($to)) {
+            $query->whereDate('ctpl_issuances.created_at', '<=', $to);
+        }
+
+        // Filter ayon sa search query
         if (!empty($search)) {
             $query->where(function($q) use ($search) {
-                $q->where('assured', 'LIKE', '%' . $search . '%') // Dito ito mahahanap
-                ->orWhere('agent', 'LIKE', '%' . $search . '%')
-                ->orWhere('coc_no', 'LIKE', '%' . $search . '%')
-                ->orWhere('plate_no', 'LIKE', '%' . $search . '%')
-                ->orWhere('mv_file', 'LIKE', '%' . $search . '%');
+                $q->where('vehicles.assured', 'LIKE', '%' . $search . '%')
+                ->orWhere('ctpl_issuances.agent', 'LIKE', '%' . $search . '%')
+                ->orWhere('coc_table.coc_no', 'LIKE', '%' . $search . '%')
+                ->orWhere('vehicles.plate_no', 'LIKE', '%' . $search . '%')
+                ->orWhere('vehicles.file_no', 'LIKE', '%' . $search . '%');
             });
         }
 
-        $logs = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $logs = $query->orderBy('ctpl_issuances.created_at', 'desc')->paginate(10)->withQueryString();
 
-        return view('ctpl.logs', compact('logs'));
+        return view('ctpl.logs', compact('logs', 'from', 'to'));
     }
 }
