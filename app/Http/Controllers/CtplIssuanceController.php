@@ -305,7 +305,8 @@ class CtplIssuanceController extends Controller
             ->join('coc_table', 'ctpl_issuances.coc_id', '=', 'coc_table.coc_id')
             ->select(
                 'ctpl_issuances.*', 
-                'vehicles.plate_no', 
+                'vehicles.plate_no',
+                'vehicles.year_model', 
                 'vehicles.make', 
                 'vehicles.color', 
                 'vehicles.chassis_no', 
