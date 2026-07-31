@@ -2,83 +2,210 @@
     <div class="py-6 bg-[#0d1117] min-h-screen text-black">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             
-            <!-- Action Buttons (Hindi makakasama sa Print) -->
+            <!-- Navigation Tabs & Print Button Bar -->
             <div class="mb-6 flex justify-between items-center print:hidden">
-                <h2 class="text-xl font-bold tracking-tight text-[#f0f6fc]">COC & Invoice Result</h2>
-                <div class="space-x-2">
-                    <button onclick="window.print()" class="bg-[#21262d] hover:bg-[#30363d] text-[#f0f6fc] border border-[#30363d] px-4 py-2 rounded-lg text-xs font-semibold transition">
-                        Print COC
+                <!-- Tab Buttons sa Kaliwa -->
+                <div class="inline-flex rounded-md shadow-sm bg-[#161b22] p-1 border border-[#30363d] relative z-20">
+                    <button type="button" onclick="switchTab('coc')" id="tab-coc-btn" class="px-4 py-2 text-xs font-semibold rounded-md bg-[#1f6feb] text-white transition cursor-pointer">
+                        COC & POLICY
                     </button>
-                    <a href="/ctpl-issuance" class="bg-[#238636] hover:bg-[#2ea043] text-white px-4 py-2 rounded-lg text-xs font-semibold transition">
-                        Issue Another Policy
+                    <button type="button" onclick="switchTab('invoice')" id="tab-invoice-btn" class="px-4 py-2 text-xs font-semibold rounded-md text-gray-300 hover:text-white transition cursor-pointer">
+                        SERVICE INVOICE
+                    </button>
+                </div>
+
+                <!-- Right Side Actions -->
+                <div class="space-x-2 relative z-20">
+                    <button onclick="window.print()" class="bg-[#238636] hover:bg-[#2ea043] text-white px-4 py-2 rounded-lg text-xs font-semibold transition shadow cursor-pointer">
+                        🖨️ Print Documents
+                    </button>
+                    <a href="/ctpl-issuance" class="bg-[#21262d] hover:bg-[#30363d] text-[#f0f6fc] border border-[#30363d] px-4 py-2 rounded-lg text-xs font-semibold transition">
+                        + New Issuance
                     </a>
                 </div>
             </div>
 
-            <!-- COC Form Container na may Background Image -->
-            <div class="relative w-full max-w-[800px] mx-auto bg-white shadow-2xl overflow-hidden print:shadow-none print:w-full">
-                
-                <!-- Background Image ng COC -->
-                <img src="{{ asset('images/coc_tc.png') }}" alt="COC Template" class="w-full h-auto block">
-
-                <!-- MGA NAKALAGAY NA DATA (Absolute Positioning para eksakto sa mga linya) -->
-                <div class="absolute inset-0 text-[11px] font-mono font-bold uppercase tracking-tight">
+            <!-- TAB 1 CONTAINER: COC & POLICY -->
+            <div id="tab-coc-container" class="space-y-6">
+                <!-- Page 1: COC -->
+                <div id="page-coc" class="relative w-full max-w-[850px] mx-auto bg-white shadow-2xl overflow-hidden print:shadow-none print:w-full block">
+                    <img src="{{ asset('images/coc_tc.png') }}" alt="COC Template" class="w-full h-auto block print:hidden">
                     
-                    <!-- NO. / POLICY NO. -->
-                    <div class="absolute top-[236px] left-[700px] text-red-600">{{ $policy->coc_no }}</div>
-                    <div class="absolute top-[315px] left-[780px]">{{ $policy->policy_no }}</div>
+                    <div class="absolute inset-0 text-[11px] font-bold uppercase tracking-tight data-container" style="font-family: 'Times New Roman', Times, serif !important;">
+                        <div class="absolute top-[135px] left-[630px]">{{ $policy->policy_no }}</div>
+                        <div class="absolute top-[175px] left-[15px] max-w-[350px] leading-tight">{{ $policy->assured }}</div>
+                        <div class="absolute top-[210px] left-[15px] max-w-[350px] leading-tight" style="line-height: 1;">{{ $policy->address }}</div>
 
-                    <!-- NAME AND ADDRESS OF INSURED -->
-                    <div class="absolute top-[365px] left-[55px] max-w-[350px] leading-tight">
-                        {{ $policy->assured }}<br>
-                        <span class="text-[9px] font-normal text-gray-700">{{ $policy->address }}</span>
+                        <!-- Date Issued -->
+                        <div class="absolute top-[200px] left-[480px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d-y')) }}</div>
+                        <!-- Validity Dates -->
+                        <div class="absolute top-[255px] left-[480px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d-y')) }}</div>
+                        <div class="absolute top-[255px] left-[630px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->addYear()->format('M-d-y')) }}</div>
+
+                        <div class="absolute top-[315px] left-[15px]">{{ $policy->year_model ?? '' }}</div>
+                        <div class="absolute top-[315px] left-[125px]">{{ $policy->make }}</div>
+                        <div class="absolute top-[315px] left-[293px]">{{ $policy->denomination }}</div>
+                        
+                        <!-- Color (May max-width at leading-tight para mag-wrap pababa kung mahaba) -->
+                        <div class="absolute top-[315px] left-[453px] max-w-[130px] leading-tight" style="line-height: 1;">{{ $policy->color }}</div>
+                        <div class="absolute top-[315px] left-[576px]">{{ preg_replace('/^(\d{6})0+(\d+)/', '$1-$2', $policy->mv_file) }}</div>
+
+                        <div class="absolute top-[345px] left-[15px]">{{ $policy->plate_no }}</div>
+                        <div class="absolute top-[345px] left-[125px]">{{ $policy->chassis_no }}</div>
+                        <div class="absolute top-[345px] left-[313px]">{{ $policy->engine_no }}</div>
                     </div>
+                </div>
+                
 
-                    <!-- DATES & PERIOD OF INSURANCE -->
-                    <div class="absolute top-[430px] left-[550px]">{{ \Carbon\Carbon::parse($policy->created_at)->format('m/d/Y') }}</div>
-                    <div class="absolute top-[430px] left-[685px]">{{ $policy->policy_no }}</div>
-                    <div class="absolute top-[535px] left-[565px]">{{ \Carbon\Carbon::parse($policy->created_at)->format('F d, Y') }}</div>
-                    <div class="absolute top-[535px] left-[770px]">{{ \Carbon\Carbon::parse($policy->created_at)->addYear()->format('F d, Y') }}</div>
+                <!-- Page 2: Stand-Alone Private Car Policy -->
+                <div id="page-policy" class="relative w-full max-w-[850px] mx-auto bg-white shadow-2xl overflow-hidden print:shadow-none print:w-full block">
+                    <img src="{{ asset('images/tc_policy.jpg') }}" alt="Private Car Policy Template" class="w-full h-auto block print:hidden">
+                    
+                    <div class="absolute inset-0 text-[11px] font-bold uppercase tracking-tight data-container" style="font-family: 'Times New Roman', Times, serif !important;">
+                        <div class="absolute top-[168px] left-[585px]">{{ $policy->policy_no }}</div>
+                        <div class="absolute top-[210px] left-[48px] max-w-[350px] leading-tight">{{ $policy->assured }}</div>
+                        <div class="absolute top-[235px] left-[48px] max-w-[350px] leading-tight" style="line-height: 1;">{{ $policy->address }}</div>
 
-                    <!-- SCHEDULED VEHICLE (Year Model, Make, Type of Body, Color, MV File) -->
-                    <div class="absolute top-[633px] left-[55px]">{{ $policy->year_model ?? '' }}</div>
-                    <div class="absolute top-[633px] left-[210px]">{{ $policy->make }}</div>
-                    <div class="absolute top-[633px] left-[420px]">{{ $policy->denomination }}</div>
-                    <div class="absolute top-[633px] left-[620px]">{{ $policy->color }}</div>
-                    <div class="absolute top-[633px] left-[790px]">{{ $policy->mv_file }}</div>
+                        <!-- Date Issued -->
+                        <div class="absolute top-[230px] left-[445px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d-y')) }}</div>
+                        <!-- Validity Dates -->
+                        <div class="absolute top-[267px] left-[445px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d-y')) }}</div>
+                        <div class="absolute top-[267px] left-[583px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->addYear()->format('M-d-y')) }}</div>
 
-                    <!-- PLATE NO, CHASSIS NO, ENGINE NO -->
-                    <div class="absolute top-[695px] left-[55px]">{{ $policy->plate_no }}</div>
-                    <div class="absolute top-[695px] left-[210px]">{{ $policy->chassis_no }}</div>
-                    <div class="absolute top-[695px] left-[420px]">{{ $policy->engine_no }}</div>
+                        <div class="absolute top-[315px] left-[48px]">{{ $policy->year_model ?? '' }}</div>
+                        <div class="absolute top-[315px] left-[165px]">{{ $policy->make }}</div>
+                        <div class="absolute top-[315px] left-[308px]">{{ $policy->denomination }}</div>
+                        
+                        <!-- Color (May max-width at leading-tight para mag-wrap pababa kung mahaba) -->
+                        <div class="absolute top-[315px] left-[443px] max-w-[130px] leading-tight" style="line-height: 1;">{{ $policy->color }}</div>
+                        <div class="absolute top-[315px] left-[580px]">{{ preg_replace('/^(\d{6})0+(\d+)/', '$1-$2', $policy->mv_file) }}</div>
 
-                    <!-- PREMIUM PAID -->
-                    <div class="absolute top-[825px] left-[620px] text-right">₱ {{ number_format($policy->amount, 2) }}</div>
-
+                        <div class="absolute top-[340px] left-[48px]">{{ $policy->plate_no }}</div>
+                        <div class="absolute top-[340px] left-[165px]">{{ $policy->chassis_no }}</div>
+                        <div class="absolute top-[340px] left-[320px]">{{ $policy->engine_no }}</div>
+                        <div class="absolute top-[585px] left-[590px]">{{ $policy->amount }}</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Service Invoice Section sa ibaba -->
-            <div class="mt-8 bg-[#161b22] border border-[#30363d] rounded-xl p-5 shadow-xl text-[#f0f6fc] print:hidden">
-                <h3 class="text-sm font-semibold border-b border-[#30363d] pb-2 text-[#2ea043] mb-3">Service Invoice Details</h3>
-                <div class="grid grid-cols-2 gap-4 text-xs">
-                    <div><span class="text-gray-400">Agent:</span> <span class="uppercase font-bold">{{ $policy->agent }}</span></div>
-                    <div><span class="text-gray-400">Date Issued:</span> <span>{{ \Carbon\Carbon::parse($policy->created_at)->format('F d, Y h:i A') }}</span></div>
-                    <div><span class="text-gray-400">Amount Paid:</span> <span class="text-green-400 font-bold">₱ {{ number_format($policy->amount, 2) }}</span></div>
-                    <div><span class="text-gray-400">Status:</span> <span class="text-green-500 font-bold uppercase">Paid</span></div>
+            <!-- TAB 2 CONTAINER: SERVICE INVOICE -->
+            <div id="tab-invoice-container" class="relative w-full max-w-[580px] mx-auto bg-white shadow-2xl overflow-hidden print:shadow-none print:w-full" style="display: none;">
+                <img src="{{ asset('images/invoice.jpg') }}" alt="Service Invoice Template" class="w-full h-auto block print:hidden">
+                
+                <div class="absolute inset-0 text-[10px] font-bold uppercase tracking-tight data-container" style="font-family: 'Times New Roman', Times, serif !important;">
+                    <!-- Invoice Date -->
+                    <div class="absolute top-[130px] left-[195px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d')) }}</div>
+                    <div class="absolute top-[130px] left-[278px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('y')) }}</div>
+
+                    <!-- Assured Name -->
+                    <div class="absolute top-[152px] left-[30px] max-w-[350px] leading-tight">{{ $policy->assured }}</div>
+
+                    <!-- Plate Number -->
+                    <div class="absolute top-[185px] left-[228px]">{{ $policy->plate_no }}</div>
+
+                    <!-- Amount (Ibinalik ang number_format at inayos ang left position para hindi lumagpas sa 580px container) -->
+                    <div class="absolute top-[200px] left-[55px] text-right">{{ number_format($policy->amount, 2) }}</div>
+                    <div class="absolute top-[625px] left-[230px] text-right">{{ number_format($policy->amount, 2) }}</div>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- CSS para sa tuwing magpi-print para lumabas lang ay ang mismong COC -->
-    @push('styles')
     <style>
         @media print {
-            body { background: white !important; color: black !important; }
-            nav, header, footer, .print\:hidden { display: none !important; }
+            @page { size: letter portrait; margin: 0; }
+            body, html { 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                background: none !important; 
+                color: black !important; 
+                font-family: 'Times New Roman', Times, serif !important; 
+            }
+            nav, header, footer, .no-print, .print\:hidden { display: none !important; }
+            .shadow-2xl { box-shadow: none !important; }
+
+            .data-container, .data-container div {
+                font-size: 15px !important;
+            }
+            .address-sub {
+                font-size: 14px !important;
+            }
+
+            body.printing-coc #tab-coc-container {
+                display: block !important;
+            }
+            body.printing-coc #tab-invoice-container {
+                display: none !important;
+            }
+
+            body.printing-invoice #tab-coc-container {
+                display: none !important;
+            }
+            body.printing-invoice #tab-invoice-container {
+                display: block !important;
+                width: 8.5in !important;
+                height: 10.5in !important;
+                position: relative !important;
+            }
+
+            #page-coc, #page-policy {
+                background-image: none !important;
+                box-shadow: none;
+                width: 8.5in !important;
+                height: 10.5in !important;
+                position: relative !important;
+                display: block !important;
+                font-family: 'Times New Roman', Times, serif !important;
+            }
+
+            #page-coc {
+                page-break-after: always !important;
+                break-after: page !important;
+            }
+
+            #page-coc img, #page-policy img, #tab-invoice-container img {
+                display: none !important;
+            }
         }
     </style>
-    @endpush
+
+    <script>
+        function switchTab(type) {
+            const cocContainer = document.getElementById('tab-coc-container');
+            const invoiceContainer = document.getElementById('tab-invoice-container');
+            const cocBtn = document.getElementById('tab-coc-btn');
+            const invoiceBtn = document.getElementById('tab-invoice-btn');
+
+            if (type === 'coc') {
+                cocContainer.style.display = 'block';
+                invoiceContainer.style.display = 'none';
+                
+                cocBtn.className = 'px-4 py-2 text-xs font-semibold rounded-md bg-[#1f6feb] text-white transition cursor-pointer';
+                invoiceBtn.className = 'px-4 py-2 text-xs font-semibold rounded-md text-gray-300 hover:text-white transition cursor-pointer';
+            } else {
+                invoiceContainer.style.display = 'block';
+                cocContainer.style.display = 'none';
+                
+                invoiceBtn.className = 'px-4 py-2 text-xs font-semibold rounded-md bg-[#1f6feb] text-white transition cursor-pointer';
+                cocBtn.className = 'px-4 py-2 text-xs font-semibold rounded-md text-gray-300 hover:text-white transition cursor-pointer';
+            }
+        }
+
+        window.addEventListener('beforeprint', function() {
+            const isInvoiceVisible = document.getElementById('tab-invoice-container').style.display !== 'none';
+            if (isInvoiceVisible) {
+                document.body.classList.add('printing-invoice');
+                document.body.classList.remove('printing-coc');
+            } else {
+                document.body.classList.add('printing-coc');
+                document.body.classList.remove('printing-invoice');
+            }
+        });
+    </script>
 </x-app-layout>
+
+
+
+
+

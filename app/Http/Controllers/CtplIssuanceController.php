@@ -186,7 +186,7 @@ class CtplIssuanceController extends Controller
                 'year_model'   => $validated['year_model'],
                 'make'         => strtoupper($validated['make']),
                 'series'       => strtoupper($validated['series']),
-                'denomination' => $validated['denomination'], // Dito natin ilalagay ang denomination
+                'denomination' => $validated['denomination'],
                 'color'        => strtoupper($validated['color']),
                 'chassis_no'   => strtoupper($validated['chassis_no']),
                 'engine_no'    => strtoupper($validated['engine_no']),
@@ -216,8 +216,8 @@ class CtplIssuanceController extends Controller
                 throw new \Exception('The selected COC Number ('.$validated['coc_no'].') does not exist in the database.');
             }
 
-            // 4. I-save sa ctpl_issuances table
-            DB::table('ctpl_issuances')->insert([
+            // 4. I-save sa ctpl_issuances table at kunin ang bagong transaction_id
+            $transactionId = DB::table('ctpl_issuances')->insertGetId([
                 'assured'      => strtoupper($validated['assured']),
                 'address'      => strtoupper($validated['address']),
                 'policy_no'    => $validated['policy_no'],
@@ -239,7 +239,9 @@ class CtplIssuanceController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'CTPL Policy successfully issued!');
+            // 6. Mag-redirect patungo sa show route bitbit ang bagong transaction_id
+            return redirect()->route('ctpl.show', $transactionId)
+                 ->with('success', 'CTPL Policy successfully issued!');
 
         } catch (\Exception $e) {
             DB::rollBack();
