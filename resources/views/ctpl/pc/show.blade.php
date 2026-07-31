@@ -34,7 +34,7 @@
                     <div class="absolute inset-0 text-[11px] font-bold uppercase tracking-tight data-container" style="font-family: 'Times New Roman', Times, serif !important;">
                         <div class="absolute top-[162px] left-[600px]">{{ $policy->policy_no }}</div>
                         <div class="absolute top-[202px] left-[35px] max-w-[350px] leading-tight">{{ $policy->assured }}</div>
-                        <div class="absolute top-[235px] left-[35px] max-w-[350px] leading-tight">{{ $policy->address }}</div>
+                        <div class="absolute top-[235px] left-[35px] max-w-[350px] leading-tight" style="line-height: 1;">{{ $policy->address }}</div>
 
                         <!-- Date Issued -->
                         <div class="absolute top-[226px] left-[460px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d-y')) }}</div>
@@ -47,46 +47,43 @@
                         <div class="absolute top-[330px] left-[303px]">{{ $policy->denomination }}</div>
                         
                         <!-- Color (May max-width at leading-tight para mag-wrap pababa kung mahaba) -->
-                        <div class="absolute top-[330px] left-[453px] max-w-[130px] leading-tight">{{ $policy->color }}</div>
-                        <div class="absolute top-[330px] left-[576px]">{{ $policy->mv_file }}</div>
+                        <div class="absolute top-[330px] left-[453px] max-w-[130px] leading-tight" style="line-height: 1;">{{ $policy->color }}</div>
+                        <div class="absolute top-[328px] left-[576px]">{{ preg_replace('/^(\d{6})0+(\d+)/', '$1-$2', $policy->mv_file) }}</div>
 
                         <div class="absolute top-[357px] left-[35px]">{{ $policy->plate_no }}</div>
                         <div class="absolute top-[357px] left-[145px]">{{ $policy->chassis_no }}</div>
                         <div class="absolute top-[357px] left-[323px]">{{ $policy->engine_no }}</div>
                     </div>
                 </div>
+                
 
                 <!-- Page 2: Stand-Alone Private Car Policy -->
                 <div id="page-policy" class="relative w-full max-w-[850px] mx-auto bg-white shadow-2xl overflow-hidden print:shadow-none print:w-full block">
                     <img src="{{ asset('images/pc_policy.jpg') }}" alt="Private Car Policy Template" class="w-full h-auto block print:hidden">
                     
                     <div class="absolute inset-0 text-[11px] font-bold uppercase tracking-tight data-container" style="font-family: 'Times New Roman', Times, serif !important;">
-                        <div class="absolute top-[195px] left-[780px]">{{ $policy->policy_no }}</div>
-                        <div class="absolute top-[218px] left-[780px] text-red-600">{{ $policy->coc_no }}</div>
+                        <div class="absolute top-[198px] left-[585px]">{{ $policy->policy_no }}</div>
+                        <div class="absolute top-[235px] left-[48px] max-w-[350px] leading-tight">{{ $policy->assured }}</div>
+                        <div class="absolute top-[260px] left-[48px] max-w-[350px] leading-tight" style="line-height: 1;">{{ $policy->address }}</div>
 
-                        <div class="absolute top-[195px] left-[85px] max-w-[380px] leading-tight">
-                            {{ $policy->assured }}<br>
-                            <span class="text-[9px] font-normal text-gray-700 address-sub">{{ $policy->address }}</span>
-                        </div>
+                        <!-- Date Issued -->
+                        <div class="absolute top-[250px] left-[445px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d-y')) }}</div>
+                        <!-- Validity Dates -->
+                        <div class="absolute top-[287px] left-[445px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d-y')) }}</div>
+                        <div class="absolute top-[287px] left-[583px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->addYear()->format('M-d-y')) }}</div>
 
-                        <!-- Date Issued & Validity -->
-                        <div class="absolute top-[242px] left-[560px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d-y')) }}</div>
-                        <div class="absolute top-[265px] left-[565px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d-y')) }}</div>
-                        <div class="absolute top-[265px] left-[770px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->addYear()->format('M-d-y')) }}</div>
+                        <div class="absolute top-[320px] left-[48px]">{{ $policy->year_model ?? '' }}</div>
+                        <div class="absolute top-[320px] left-[165px]">{{ $policy->make }}</div>
+                        <div class="absolute top-[320px] left-[308px]">{{ $policy->denomination }}</div>
+                        
+                        <!-- Color (May max-width at leading-tight para mag-wrap pababa kung mahaba) -->
+                        <div class="absolute top-[320px] left-[443px] max-w-[130px] leading-tight" style="line-height: 1;">{{ $policy->color }}</div>
+                        <div class="absolute top-[320px] left-[572px]">{{ preg_replace('/^(\d{6})0+(\d+)/', '$1-$2', $policy->mv_file) }}</div>
 
-                        <div class="absolute top-[325px] left-[85px]">{{ $policy->year_model ?? '' }}</div>
-                        <div class="absolute top-[325px] left-[250px]">{{ $policy->make }}</div>
-                        <div class="absolute top-[325px] left-[430px]">{{ $policy->denomination }}</div>
-                        <div class="absolute top-[325px] left-[620px] max-w-[130px] leading-tight">{{ $policy->color }}</div>
-                        <div class="absolute top-[325px] left-[790px]">{{ $policy->mv_file }}</div>
-
-                        <div class="absolute top-[365px] left-[85px]">{{ $policy->plate_no }}</div>
-                        <div class="absolute top-[365px] left-[250px]">{{ $policy->chassis_no }}</div>
-                        <div class="absolute top-[365px] left-[500px]">{{ $policy->engine_no }}</div>
-
-                        <div class="absolute top-[438px] left-[750px] text-right">₱ {{ number_format($policy->amount, 2) }}</div>
-                        <div class="absolute top-[460px] left-[750px] text-right">₱ {{ number_format($policy->amount, 2) }}</div>
-                        <div class="absolute top-[505px] left-[780px] text-right">₱ {{ number_format($policy->amount, 2) }}</div>
+                        <div class="absolute top-[345px] left-[48px]">{{ $policy->plate_no }}</div>
+                        <div class="absolute top-[345px] left-[165px]">{{ $policy->chassis_no }}</div>
+                        <div class="absolute top-[345px] left-[320px]">{{ $policy->engine_no }}</div>
+                        <div class="absolute top-[585px] left-[590px]">{{ $policy->amount }}</div>
                     </div>
                 </div>
             </div>
