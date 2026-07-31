@@ -256,18 +256,24 @@ class CtplIssuanceController extends Controller
     {
         $search = trim($request->query('search'));
         
-        // Default sa ngayong araw ang from at to kung walang pinili para mabilis mag-load
+        // Default sa ngayong araw ang from at to kung walang pinili
         $from = $request->query('from', Carbon::today()->format('Y-m-d'));
         $to = $request->query('to', Carbon::today()->format('Y-m-d'));
+
+        // Kunin ang per_page value mula sa request, default sa 10 kung wala
+        $perPage = $request->query('per_page', 10);
 
         $query = DB::table('ctpl_issuances')
             ->join('vehicles', 'ctpl_issuances.vehicle_id', '=', 'vehicles.vehicle_id')
             ->join('coc_table', 'ctpl_issuances.coc_id', '=', 'coc_table.coc_id')
             ->select(
-                'ctpl_issuances.transaction_id as id', // <--- Pinalitan ng 'issuance_id as id'. (Kung sakaling 'id' talaga ang column, tanggalin ito dahil kasama na sa ctpl_issuances.*)
+                'ctpl_issuances.transaction_id as id', 
                 'ctpl_issuances.*', 
                 'vehicles.plate_no', 
+                'vehicles.denomination', 
                 'vehicles.file_no as mv_file', 
+                'vehicles.engine_no',   // <-- Idinagdag para sa motor
+                'vehicles.chassis_no',  // <-- Idinagdag para sa chassis
                 'coc_table.coc_no'
             );
 
@@ -294,7 +300,13 @@ class CtplIssuanceController extends Controller
             });
         }
 
-        $logs = $query->orderBy('ctpl_issuances.created_at', 'desc')->paginate(10)->withQueryString();
+        $logs = $query->orderBy('ctpl_issuances.created_at', 'desc')
+                    ->paginate($perPage)
+                    ->withQueryString();
+
+        if ($request->ajax()) {
+            return view('ctpl.logs', compact('logs', 'from', 'to'))->render();
+        }
 
         return view('ctpl.logs', compact('logs', 'from', 'to'));
     }
