@@ -63,11 +63,63 @@
                 'CV': ['TRUCK', 'TRAILER']
             },
 
+            // Function para ma-reset ang buong form
+            resetForm() {
+                this.assured_name = '';
+                this.address = '';
+                this.vehicleType = '';
+                this.denomination = '';
+                this.year_model = '';
+                this.make = '';
+                this.series = '';
+                this.color = '';
+                this.mv_file = '';
+                this.plate_no = '';
+                this.chassis_no = '';
+                this.engine_no = '';
+                this.coc_no = '';
+                this.policy_no = '';
+                this.agent = '';
+                this.amount = '';
+                this.isCocVerified = false;
+                this.isPolicyVerified = false;
+                this.cocError = '';
+                this.policyError = '';
+                this.searchResults = [];
+                this.searchValue = '';
+            },
+
+            // Check kung may laman ang form para sa beforeunload prompt
+            hasUnsavedChanges() {
+                return this.assured_name.trim() !== '' ||
+                       this.address.trim() !== '' ||
+                       this.vehicleType !== '' ||
+                       this.plate_no.trim() !== '' ||
+                       this.coc_no.trim() !== '' ||
+                       this.policy_no.trim() !== '';
+            },
+
+            init() {
+                // Babala kapag aalis o magre-refresh habang may unsubmitted changes
+                window.addEventListener('beforeunload', (event) => {
+                    if (this.hasUnsavedChanges()) {
+                        event.preventDefault();
+                        event.returnValue = '';
+                    }
+                });
+
+                // Clear form kapag bumalik gamit ang browser history (Back button / bfcache)
+                window.addEventListener('pageshow', (event) => {
+                    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                        this.resetForm();
+                    }
+                });
+            },
+
             // Filter para pure numbers lang ang pumasok
             filterNumbers(field) {
                 this[field] = this[field].replace(/[^0-9]/g, '');
                 
-                // Kapag COC ang binago, i-reset ang server validation state nito
                 if(field === 'coc_no') {
                     this.isCocVerified = false;
                     this.cocError = '';
@@ -76,7 +128,6 @@
                     }
                 }
 
-                // Realtime validation para sa Policy Number gamit ang debounce (500ms)
                 if(field === 'policy_no') {
                     this.isPolicyVerified = false;
                     this.policyError = '';
@@ -90,7 +141,6 @@
                 }
             },
 
-            // Realtime backend check gamit ang Fetch API para sa COC
             checkCocAvailability() {
                 if(this.coc_no.length !== 8 || !this.vehicleType) return;
                 
@@ -115,7 +165,6 @@
                     });
             },
 
-            // Realtime backend check gamit ang Fetch API para sa Policy
             checkPolicyUniqueness() {
                 if(this.policy_no.trim() === '') return;
                 
@@ -140,7 +189,6 @@
                     });
             },
 
-            // Search kapag pinindot ang Enter o Search button
             executeSearch() {
                 let val = this.searchValue.trim();
                 if(!val) {
@@ -172,7 +220,6 @@
                     });
             },
 
-            // Function para piliin ang sasakyan at i-autofill ang form
             selectVehicle(d) {
                 this.assured_name  = d.assured || '';
                 this.address       = d.address || '';
@@ -186,7 +233,6 @@
                 this.chassis_no    = d.chassis_no || '';
                 this.engine_no     = d.engine_no || '';
 
-                // Auto-detect Classification base sa Denomination kung available
                 if (d.denomination) {
                     for (let classKey in this.denominations) {
                         if (this.denominations[classKey].includes(d.denomination.toUpperCase())) {
@@ -196,7 +242,6 @@
                     }
                 }
 
-                // Linisin ang search states pagkatapos pumili
                 this.searchResults = [];
                 this.searchValue = '';
             },
@@ -223,7 +268,7 @@
                     this.agent.trim() !== '' &&
                     this.amount !== '';
             }
-         }">
+           }">
         <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8">
 
             <!-- Quick Vehicle Search Card (Enter-to-Search) -->
@@ -251,17 +296,15 @@
                     </button>
                 </div>
 
-                <!-- Loading / Error Feedbacks -->
                 <p x-show="isSearching" class="text-xs text-yellow-500 mt-2">Searching vehicle...</p>
                 <p x-show="searchError" x-text="searchError" class="text-xs text-red-500 mt-2"></p>
 
-                <!-- Search Results List kung saan pwede mamili -->
                 <div x-show="searchResults.length > 0" class="mt-3 border-t border-[#30363d] pt-3">
                     <p class="text-xs text-gray-400 mb-2">Select a vehicle to autofill the form:</p>
                     <div class="space-y-2 max-h-48 overflow-y-auto">
                         <template x-for="item in searchResults" :key="item.vehicle_id || item.plate_no">
                             <div @click="selectVehicle(item)" 
-                                 class="bg-[#0d1117] border border-[#30363d] hover:border-[#58a6ff] p-2.5 rounded-lg cursor-pointer flex justify-between items-center transition">
+                               class="bg-[#0d1117] border border-[#30363d] hover:border-[#58a6ff] p-2.5 rounded-lg cursor-pointer flex justify-between items-center transition">
                                 <div>
                                     <span class="font-bold text-[#58a6ff]" x-text="item.plate_no || item.file_no"></span> 
                                     <span class="text-gray-300 ml-2" x-text="(item.make || '') + ' ' + (item.series || '')"></span>
@@ -274,7 +317,8 @@
                 </div>
             </div>
 
-            <form action="/ctpl-issuance" method="POST" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <!-- Form submission na magti-trigger ng submit event nang walang warning prompt kung successful -->
+            <form action="/ctpl-issuance" method="POST" @submit="window.removeEventListener('beforeunload', null)" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 @csrf
 
                 <!-- COLUMN 1: Assured Details -->
@@ -383,14 +427,13 @@
                             3. Allocation and Payment
                         </h3>
 
-                        <!-- COC Number (Pure Numbers, Max 8) -->
+                        <!-- COC Number -->
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">COC Number</label>
                             <input type="text" name="coc_no" x-model="coc_no" @input="filterNumbers('coc_no')" maxlength="8" :disabled="!isSection1And2Valid()" required placeholder="E.G. 12345678" 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border rounded-lg px-3 py-2 text-xs focus:outline-none disabled:cursor-not-allowed"
                                 :class="cocError ? 'border-red-500 focus:border-red-500' : (isCocVerified ? 'border-green-500 focus:border-green-500' : 'border-[#30363d] focus:border-[#58a6ff]')">
                             
-                            <!-- Realtime Feedback Messages -->
                             <p x-show="cocValidating" class="text-[10px] text-yellow-500 mt-1">Verifying availability...</p>
                             <p x-show="cocError" x-text="cocError" class="text-[10px] text-red-500 mt-1"></p>
                             <p x-show="isCocVerified" class="text-[10px] text-green-500 mt-1">✓ COC is valid and available for this vehicle type.</p>
@@ -403,7 +446,6 @@
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border rounded-lg px-3 py-2 text-xs focus:outline-none disabled:cursor-not-allowed"
                                 :class="policyError ? 'border-red-500 focus:border-red-500' : (isPolicyVerified ? 'border-green-500 focus:border-green-500' : 'border-[#30363d] focus:border-[#58a6ff]')">
                             
-                            <!-- Realtime Feedback Messages para sa Policy -->
                             <p x-show="policyValidating" class="text-[10px] text-yellow-500 mt-1">Checking policy availability...</p>
                             <p x-show="policyError" x-text="policyError" class="text-[10px] text-red-500 mt-1"></p>
                             <p x-show="isPolicyVerified" class="text-[10px] text-green-500 mt-1">✓ Policy number is available and unique.</p>
