@@ -264,7 +264,9 @@ function logsData() {
                         const mvFileNo = row.getAttribute('data-mvfile') || 'None';
                         const motorNo = row.getAttribute('data-motor') || 'None';
                         const chassisNo = row.getAttribute('data-chassis') || 'None';
-                        const assuredName = row.getAttribute('data-assured') || 'None';
+
+                        let rawAssuredName = row.getAttribute('data-assured') || 'None';
+                        const assuredName = rawAssuredName.replace(/[^a-zA-Z0-9\s]/g, '').trim();
 
                         const createdAtStr = row.getAttribute('data-created') || '';
                         const createdDate = new Date(createdAtStr);
@@ -277,8 +279,8 @@ function logsData() {
                         const expiDate = (expDateObj.getMonth() + 1) + '/' + expDateObj.getDate() + '/' + expDateObj.getFullYear();
 
                         const regType = 'R';
-                        const taxType = '1';
-                        const assuredTin = '99999999999999';
+                        const taxType = '0';
+                        const assuredTin = '111-111-111-11111';
 
                         // 1. Kunin at i-map muna ang tamang MV_TYPE dito
                         const rawMvType = (row.getAttribute('data-mvtype') || '').trim().toUpperCase();
@@ -329,7 +331,7 @@ function logsData() {
                             premType,
                             regType,
                             taxType,
-                            `"${assuredName}"`,
+                            assuredName,
                             assuredTin,
                             mvType
                         ];
