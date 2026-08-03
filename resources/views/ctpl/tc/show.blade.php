@@ -42,17 +42,17 @@
                         <div class="absolute top-[255px] left-[480px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d-y')) }}</div>
                         <div class="absolute top-[255px] left-[630px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->addYear()->format('M-d-y')) }}</div>
 
-                        <div class="absolute top-[315px] left-[15px]">{{ $policy->year_model ?? '' }}</div>
-                        <div class="absolute top-[315px] left-[125px]">{{ $policy->make }}</div>
-                        <div class="absolute top-[315px] left-[293px]">{{ $policy->denomination }}</div>
+                        <div class="absolute top-[300px] left-[15px]">{{ $policy->year_model ?? '' }}</div>
+                        <div class="absolute top-[300px] left-[125px]">{{ $policy->make }}</div>
+                        <div class="absolute top-[300px] left-[293px]">{{ $policy->denomination }}</div>
                         
                         <!-- Color (May max-width at leading-tight para mag-wrap pababa kung mahaba) -->
-                        <div class="absolute top-[315px] left-[453px] max-w-[130px] leading-tight" style="line-height: 1;">{{ $policy->color }}</div>
-                        <div class="absolute top-[315px] left-[576px]">{{ preg_replace('/^(\d{6})0+(\d+)/', '$1-$2', $policy->mv_file) }}</div>
+                        <div class="absolute top-[300px] left-[453px] max-w-[130px] leading-tight" style="line-height: 1;">{{ $policy->color }}</div>
+                        <div class="absolute top-[300px] left-[576px]">{{ preg_replace('/^(\d{6})0+(\d+)/', '$1-$2', $policy->mv_file) }}</div>
 
-                        <div class="absolute top-[345px] left-[15px]">{{ $policy->plate_no }}</div>
-                        <div class="absolute top-[345px] left-[125px]">{{ $policy->chassis_no }}</div>
-                        <div class="absolute top-[345px] left-[313px]">{{ $policy->engine_no }}</div>
+                        <div class="absolute top-[330px] left-[15px]">{{ $policy->plate_no }}</div>
+                        <div class="absolute top-[330px] left-[125px]">{{ $policy->chassis_no }}</div>
+                        <div class="absolute top-[330px] left-[313px]">{{ $policy->engine_no }}</div>
                     </div>
                 </div>
                 
