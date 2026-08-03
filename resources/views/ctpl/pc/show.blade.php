@@ -98,7 +98,7 @@
                     <div class="absolute top-[130px] left-[278px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('y')) }}</div>
 
                     <!-- Assured Name -->
-                    <div class="absolute top-[152px] left-[30px] max-w-[350px] leading-tight">
+                    <div class="absolute top-[152px] left-0 right-60 max-w-[300px] leading-tight text-center">
                         {!! preg_replace('/(&amp;|\/|-|:|,)/', '<br>$1', e($policy->assured)) !!}
                     </div>
 

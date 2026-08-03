@@ -18,260 +18,273 @@
         }
     </style>
 
-    <div class="py-6 bg-[#0d1117] min-h-screen text-[#f0f6fc]" 
-         x-data="{ 
-            assured_name: '',
-            address: '',
-            vehicleType: '',
-            denomination: '',
-            year_model: '',
-            make: '',
-            series: '',
-            color: '',
-            mv_file: '',
-            plate_no: '',
-            chassis_no: '',
-            engine_no: '',
-            
-            coc_no: '',
-            policy_no: '',
-            agent: '',
-            amount: '',
+    <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8"
+             x-data="{ 
+                 assured_name: '',
+                 address: '',
+                 vehicleType: '',
+                 denomination: '',
+                 year_model: '',
+                 make: '',
+                 series: '',
+                 color: '',
+                 mv_file: '',
+                 plate_no: '',
+                 chassis_no: '',
+                 engine_no: '',
+                 
+                 coc_no: '',
+                 policy_no: '',
+                 agent: '',
+                 amount: '',
 
-            // SEARCH STATES
-            searchType: 'plate_no',
-            searchValue: '',
-            isSearching: false,
-            searchResults: [],
-            searchError: '',
+                 // SEARCH STATES
+                 searchType: 'plate_no',
+                 searchValue: '',
+                 isSearching: false,
+                 searchResults: [],
+                 searchError: '',
 
-            // API Check states para sa COC Validation
-            cocError: '',
-            cocValidating: false,
-            isCocVerified: false,
+                 // API Check states para sa COC Validation
+                 cocError: '',
+                 cocValidating: false,
+                 isCocVerified: false,
 
-            // API Check states para sa Policy Validation
-            policyError: '',
-            policyValidating: false,
-            isPolicyVerified: false,
-            policyTimeout: null,
+                 // API Check states para sa Policy Validation
+                 policyError: '',
+                 policyValidating: false,
+                 isPolicyVerified: false,
+                 policyTimeout: null,
 
-            denominations: {
-                'MC': ['MC', 'MTC'],
-                'PC': ['CAR', 'PASSENGER CAR', 'SEDAN', 'HATCHBACK', 'UTILITY VEHICLE', 'COUPE', 'SUV'],
-                'TC': ['TRICYCLE'],
-                'CV': ['TRUCK', 'TRAILER']
-            },
+                 denominations: {
+                     'MC': ['MC', 'MTC'],
+                     'PC': ['CAR', 'PASSENGER CAR', 'SEDAN', 'HATCHBACK', 'UTILITY VEHICLE', 'COUPE', 'SUV'],
+                     'TC': ['TRICYCLE'],
+                     'CV': ['TRUCK', 'TRAILER']
+                 },
 
-            // Function para ma-reset ang buong form
-            resetForm() {
-                this.assured_name = '';
-                this.address = '';
-                this.vehicleType = '';
-                this.denomination = '';
-                this.year_model = '';
-                this.make = '';
-                this.series = '';
-                this.color = '';
-                this.mv_file = '';
-                this.plate_no = '';
-                this.chassis_no = '';
-                this.engine_no = '';
-                this.coc_no = '';
-                this.policy_no = '';
-                this.agent = '';
-                this.amount = '';
-                this.isCocVerified = false;
-                this.isPolicyVerified = false;
-                this.cocError = '';
-                this.policyError = '';
-                this.searchResults = [];
-                this.searchValue = '';
-            },
+                 // Function para kusang mag-update ang Classification kapag nagbago ang Denomination
+                 updateClassification() {
+                     if (!this.denomination) {
+                         this.vehicleType = '';
+                         return;
+                     }
 
-            // Check kung may laman ang form para sa beforeunload prompt
-            hasUnsavedChanges() {
-                return this.assured_name.trim() !== '' ||
-                       this.address.trim() !== '' ||
-                       this.vehicleType !== '' ||
-                       this.plate_no.trim() !== '' ||
-                       this.coc_no.trim() !== '' ||
-                       this.policy_no.trim() !== '';
-            },
+                     let denomUpper = this.denomination.toUpperCase();
+                     let matchedKey = '';
 
-            init() {
-                // Babala kapag aalis o magre-refresh habang may unsubmitted changes
-                window.addEventListener('beforeunload', (event) => {
-                    if (this.hasUnsavedChanges()) {
-                        event.preventDefault();
-                        event.returnValue = '';
-                    }
-                });
+                     for (let classKey in this.denominations) {
+                         if (this.denominations[classKey].includes(denomUpper)) {
+                             matchedKey = classKey;
+                             break;
+                         }
+                     }
 
-                // Clear form kapag bumalik gamit ang browser history (Back button / bfcache)
-                window.addEventListener('pageshow', (event) => {
-                    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-                        this.resetForm();
-                    }
-                });
-            },
+                     this.vehicleType = matchedKey || 'PC';
+                     
+                     this.isCocVerified = false;
+                     if (this.coc_no.length === 8) {
+                         this.checkCocAvailability();
+                     }
+                 },
 
-            // Filter para pure numbers lang ang pumasok
-            filterNumbers(field) {
-                this[field] = this[field].replace(/[^0-9]/g, '');
-                
-                if(field === 'coc_no') {
-                    this.isCocVerified = false;
-                    this.cocError = '';
-                    if(this.coc_no.length === 8) {
-                        this.checkCocAvailability();
-                    }
-                }
+                 // Function para ma-reset ang buong form
+                 resetForm() {
+                     this.assured_name = '';
+                     this.address = '';
+                     this.vehicleType = '';
+                     this.denomination = '';
+                     this.year_model = '';
+                     this.make = '';
+                     this.series = '';
+                     this.color = '';
+                     this.mv_file = '';
+                     this.plate_no = '';
+                     this.chassis_no = '';
+                     this.engine_no = '';
+                     this.coc_no = '';
+                     this.policy_no = '';
+                     this.agent = '';
+                     this.amount = '';
+                     this.isCocVerified = false;
+                     this.isPolicyVerified = false;
+                     this.cocError = '';
+                     this.policyError = '';
+                     this.searchResults = [];
+                     this.searchValue = '';
+                 },
 
-                if(field === 'policy_no') {
-                    this.isPolicyVerified = false;
-                    this.policyError = '';
-                    
-                    clearTimeout(this.policyTimeout);
-                    if(this.policy_no.trim() !== '') {
-                        this.policyTimeout = setTimeout(() => {
-                            this.checkPolicyUniqueness();
-                        }, 500);
-                    }
-                }
-            },
+                 hasUnsavedChanges() {
+                     return this.assured_name.trim() !== '' ||
+                            this.address.trim() !== '' ||
+                            this.vehicleType !== '' ||
+                            this.plate_no.trim() !== '' ||
+                            this.coc_no.trim() !== '' ||
+                            this.policy_no.trim() !== '';
+                 },
 
-            checkCocAvailability() {
-                if(this.coc_no.length !== 8 || !this.vehicleType) return;
-                
-                this.cocValidating = true;
-                this.cocError = '';
-                
-                fetch(`/api/validate-coc?coc_no=${this.coc_no}&classification=${this.vehicleType}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        this.cocValidating = false;
-                        if(data.valid) {
-                            this.isCocVerified = true;
-                            this.cocError = '';
-                        } else {
-                            this.isCocVerified = false;
-                            this.cocError = data.message;
-                        }
-                    })
-                    .catch(() => {
-                        this.cocValidating = false;
-                        this.cocError = 'Error connecting to validation server.';
-                    });
-            },
+                 init() {
+                     window.addEventListener('beforeunload', (event) => {
+                         if (this.hasUnsavedChanges()) {
+                             event.preventDefault();
+                             event.returnValue = '';
+                         }
+                     });
 
-            checkPolicyUniqueness() {
-                if(this.policy_no.trim() === '') return;
-                
-                this.policyValidating = true;
-                this.policyError = '';
-                
-                fetch(`/api/validate-policy?policy_no=${this.policy_no}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        this.policyValidating = false;
-                        if(data.valid) {
-                            this.isPolicyVerified = true;
-                            this.policyError = '';
-                        } else {
-                            this.isPolicyVerified = false;
-                            this.policyError = data.message;
-                        }
-                    })
-                    .catch(() => {
-                        this.policyValidating = false;
-                        this.policyError = 'Error connecting to validation server.';
-                    });
-            },
+                     window.addEventListener('pageshow', (event) => {
+                         if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                             this.resetForm();
+                         }
+                     });
+                 },
 
-            executeSearch() {
-                let val = this.searchValue.trim();
-                if(!val) {
-                    this.searchError = 'Please enter a value to search.';
-                    return;
-                }
+                 filterNumbers(field) {
+                     this[field] = this[field].replace(/[^0-9]/g, '');
+                     
+                     if(field === 'coc_no') {
+                         this.isCocVerified = false;
+                         this.cocError = '';
+                         if(this.coc_no.length === 8) {
+                             this.checkCocAvailability();
+                         }
+                     }
 
-                this.isSearching = true;
-                this.searchError = '';
-                this.searchResults = [];
+                     if(field === 'policy_no') {
+                         this.isPolicyVerified = false;
+                         this.policyError = '';
+                         
+                         clearTimeout(this.policyTimeout);
+                         if(this.policy_no.trim() !== '') {
+                             this.policyTimeout = setTimeout(() => {
+                                 this.checkPolicyUniqueness();
+                             }, 500);
+                         }
+                     }
+                 },
 
-                fetch(`/api/search-vehicle?type=${this.searchType}&value=${val}`)
-                    .then(res => res.json())
-                    .then(res => {
-                        this.isSearching = false;
-                        if(res.success && Array.isArray(res.data)) {
-                            if(res.data.length === 0) {
-                                this.searchError = 'No vehicle found.';
-                            } else {
-                                this.searchResults = res.data;
-                            }
-                        } else {
-                            this.searchError = 'No vehicle found.';
-                        }
-                    })
-                    .catch(() => {
-                        this.isSearching = false;
-                        this.searchError = 'Error connecting to search server.';
-                    });
-            },
+                 checkCocAvailability() {
+                     if(this.coc_no.length !== 8 || !this.vehicleType) return;
+                     
+                     this.cocValidating = true;
+                     this.cocError = '';
+                     
+                     fetch(`/api/validate-coc?coc_no=${this.coc_no}&classification=${this.vehicleType}`)
+                         .then(res => res.json())
+                         .then(data => {
+                             this.cocValidating = false;
+                             if(data.valid) {
+                                 this.isCocVerified = true;
+                                 this.cocError = '';
+                             } else {
+                                 this.isCocVerified = false;
+                                 this.cocError = data.message;
+                             }
+                         })
+                         .catch(() => {
+                             this.cocValidating = false;
+                             this.cocError = 'Error connecting to validation server.';
+                         });
+                 },
 
-            selectVehicle(d) {
-                this.assured_name  = d.assured || '';
-                this.address       = d.address || '';
-                this.denomination  = d.denomination || '';
-                this.year_model    = d.year_model || '';
-                this.make          = d.make || '';
-                this.series        = d.series || '';
-                this.color         = d.color || '';
-                this.mv_file       = d.file_no || d.mv_file || '';
-                this.plate_no      = d.plate_no || '';
-                this.chassis_no    = d.chassis_no || '';
-                this.engine_no     = d.engine_no || '';
+                 checkPolicyUniqueness() {
+                     if(this.policy_no.trim() === '') return;
+                     
+                     this.policyValidating = true;
+                     this.policyError = '';
+                     
+                     fetch(`/api/validate-policy?policy_no=${this.policy_no}`)
+                         .then(res => res.json())
+                         .then(data => {
+                             this.policyValidating = false;
+                             if(data.valid) {
+                                 this.isPolicyVerified = true;
+                                 this.policyError = '';
+                             } else {
+                                 this.isPolicyVerified = false;
+                                 this.policyError = data.message;
+                             }
+                         })
+                         .catch(() => {
+                             this.policyValidating = false;
+                             this.policyError = 'Error connecting to validation server.';
+                         });
+                 },
 
-                if (d.denomination) {
-                    for (let classKey in this.denominations) {
-                        if (this.denominations[classKey].includes(d.denomination.toUpperCase())) {
-                            this.vehicleType = classKey;
-                            break;
-                        }
-                    }
-                }
+                 executeSearch() {
+                     let val = this.searchValue.trim();
+                     if(!val) {
+                         this.searchError = 'Please enter a value to search.';
+                         return;
+                     }
 
-                this.searchResults = [];
-                this.searchValue = '';
-            },
+                     this.isSearching = true;
+                     this.searchError = '';
+                     this.searchResults = [];
 
-            isSection1And2Valid() {
-                return this.assured_name.trim() !== '' &&
-                       this.address.trim() !== '' &&
-                       this.vehicleType !== '' &&
-                       this.denomination !== '' &&
-                       this.year_model >= 1900 && this.year_model <= 2100 &&
-                       this.make.trim() !== '' &&
-                       this.series.trim() !== '' &&
-                       this.color.trim() !== '' &&
-                       this.mv_file.trim() !== '' &&
-                       this.plate_no.trim() !== '' &&
-                       this.chassis_no.trim() !== '' &&
-                       this.engine_no.trim() !== '';
-            },
+                     fetch(`/api/search-vehicle?type=${this.searchType}&value=${val}`)
+                         .then(res => res.json())
+                         .then(res => {
+                             this.isSearching = false;
+                             if(res.success && Array.isArray(res.data)) {
+                                 if(res.data.length === 0) {
+                                     this.searchError = 'No vehicle found.';
+                                 } else {
+                                     this.searchResults = res.data;
+                                 }
+                             } else {
+                                 this.searchError = 'No vehicle found.';
+                             }
+                         })
+                         .catch(() => {
+                             this.isSearching = false;
+                             this.searchError = 'Error connecting to search server.';
+                         });
+                 },
 
-            isFormValid() {
-                return this.isSection1And2Valid() &&
-                    this.isCocVerified &&
-                    this.isPolicyVerified && 
-                    this.agent.trim() !== '' &&
-                    this.amount !== '';
-            }
-           }">
-        <div class="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8">
+                 selectVehicle(d) {
+                     this.assured_name  = d.assured || '';
+                     this.address       = d.address || '';
+                     this.denomination  = d.denomination ? d.denomination.toUpperCase() : '';
+                     this.year_model    = d.year_model || '';
+                     this.make          = d.make || '';
+                     this.series        = d.series || '';
+                     this.color         = d.color || '';
+                     this.mv_file       = d.file_no || d.mv_file || '';
+                     this.plate_no      = d.plate_no || '';
+                     this.chassis_no    = d.chassis_no || '';
+                     this.engine_no     = d.engine_no || '';
 
-            <!-- Quick Vehicle Search Card (Enter-to-Search) -->
+                     this.updateClassification();
+
+                     this.searchResults = [];
+                     this.searchValue = '';
+                 },
+
+                 isSection1And2Valid() {
+                     return this.assured_name.trim() !== '' &&
+                            this.address.trim() !== '' &&
+                            this.vehicleType !== '' &&
+                            this.denomination !== '' &&
+                            this.year_model >= 1900 && this.year_model <= 2100 &&
+                            this.make.trim() !== '' &&
+                            this.series.trim() !== '' &&
+                            this.color.trim() !== '' &&
+                            this.mv_file.trim() !== '' &&
+                            this.plate_no.trim() !== '' &&
+                            this.chassis_no.trim() !== '' &&
+                            this.engine_no.trim() !== '';
+                 },
+
+                 isFormValid() {
+                     return this.isSection1And2Valid() &&
+                         this.isCocVerified &&
+                         this.isPolicyVerified && 
+                         this.agent.trim() !== '' &&
+                         this.amount !== '';
+                 }
+                }">
+
+            <!-- Quick Vehicle Search Card -->
             <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-4 shadow-xl mb-6">
                 <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Quick Vehicle Search & Autofill</h3>
                 <div class="flex flex-col sm:flex-row gap-3">
@@ -317,7 +330,7 @@
                 </div>
             </div>
 
-            <!-- Form submission na magti-trigger ng submit event nang walang warning prompt kung successful -->
+            <!-- Form Submission -->
             <form action="/ctpl-issuance" method="POST" @submit="window.removeEventListener('beforeunload', null)" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 @csrf
 
@@ -342,33 +355,6 @@
                 <div class="lg:col-span-5 bg-[#161b22] border border-[#30363d] rounded-xl p-5 shadow-xl space-y-4 min-h-[460px]">
                     <h3 class="text-sm font-semibold border-b border-[#30363d] pb-2 text-[#58a6ff]">2. Vehicle Specification</h3>
                     
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1 font-medium">Classification</label>
-                            <select name="vehicle_type" x-model="vehicleType" @change="denomination = ''; isCocVerified = false; checkCocAvailability();" required 
-                                class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-[#58a6ff]">
-                                <option value="" disabled selected>Select Class...</option>
-                                <option value="MC">MOTORCYCLE (MC)</option>
-                                <option value="PC">PRIVATE CAR (PC)</option>
-                                <option value="TC">TRICYCLE (TC)</option>
-                                <option value="CV">COMMERCIAL VEHICLE (CV)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1 font-medium">Denomination</label>
-                            <select name="denomination" x-model="denomination" :disabled="!vehicleType" required 
-                                class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-[#58a6ff] disabled:opacity-50">
-                                <option value="" disabled selected>Select Denomination...</option>
-                                <template x-if="vehicleType">
-                                    <template x-for="item in denominations[vehicleType]" :key="item">
-                                        <option :value="item" x-text="item"></option>
-                                    </template>
-                                </template>
-                            </select>
-                        </div>
-                    </div>
-
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs text-gray-400 mb-1 font-medium">Year Model</label>
@@ -413,6 +399,38 @@
                             <input type="text" name="engine_no" x-model="engine_no" maxlength="30" required placeholder="ENGINE NO." 
                                 class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] uppercase">
                         </div>
+                    </div>
+
+                    <!-- DENOMINATION FIELD NA NAKALAGAY SA PINAKABABA -->
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1 font-medium">Denomination</label>
+                        <select name="denomination" x-model="denomination" @change="updateClassification()" required 
+                            class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-[#58a6ff]">
+                            <option value="" disabled selected>Select Denomination...</option>
+                            <optgroup label="Motorcycle">
+                                <option value="MC">MC</option>
+                                <option value="MTC">MTC</option>
+                            </optgroup>
+                            <optgroup label="Private Car">
+                                <option value="CAR">CAR</option>
+                                <option value="PASSENGER CAR">PASSENGER CAR</option>
+                                <option value="SEDAN">SEDAN</option>
+                                <option value="HATCHBACK">HATCHBACK</option>
+                                <option value="UTILITY VEHICLE">UTILITY VEHICLE</option>
+                                <option value="COUPE">COUPE</option>
+                                <option value="SUV">SUV</option>
+                            </optgroup>
+                            <optgroup label="Tricycle">
+                                <option value="TRICYCLE">TRICYCLE</option>
+                            </optgroup>
+                            <optgroup label="Commercial Vehicle">
+                                <option value="TRUCK">TRUCK</option>
+                                <option value="TRAILER">TRAILER</option>
+                            </optgroup>
+                        </select>
+                        
+                        <!-- NAKATAGO NA CLASSIFICATION (HIDDEN INPUT PARA SA BACKEND) -->
+                        <input type="hidden" name="vehicle_type" x-model="vehicleType">
                     </div>
                 </div>
 
