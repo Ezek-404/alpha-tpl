@@ -269,11 +269,15 @@ class CtplIssuanceController extends Controller
             ->select(
                 'ctpl_issuances.transaction_id as id', 
                 'ctpl_issuances.*', 
+                'vehicles.year_model',     // <-- Idinagdag
+                'vehicles.make',           // <-- Idinagdag
+                'vehicles.series',         // <-- Idinagdag
+                'vehicles.color',          // <-- Idinagdag
                 'vehicles.plate_no', 
                 'vehicles.denomination', 
                 'vehicles.file_no as mv_file', 
-                'vehicles.engine_no',   // <-- Idinagdag para sa motor
-                'vehicles.chassis_no',  // <-- Idinagdag para sa chassis
+                'vehicles.engine_no', 
+                'vehicles.chassis_no', 
                 'coc_table.coc_no'
             );
 
@@ -368,5 +372,83 @@ class CtplIssuanceController extends Controller
 
         // Fallback kung sakaling wala o hindi pasok sa kategorya
         return view('ctpl.result', compact('policy'));
+    }
+
+    public function updateLog(\Illuminate\Http\Request $request, $transaction_id)
+    {
+        $request->validate([
+            'assured' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'agent' => 'nullable|string|max:255',
+            'amount' => 'nullable|numeric',
+            'year_model' => 'nullable|string|max:255',
+            'make' => 'nullable|string|max:255',
+            'series' => 'nullable|string|max:255',
+            'denomination' => 'nullable|string|max:255',
+            'color' => 'nullable|string|max:255',
+            'plate_no' => 'nullable|string|max:255',
+            'file_no' => 'nullable|string|max:255',
+            'engine_no' => 'nullable|string|max:255',
+            'chassis_no' => 'nullable|string|max:255',
+        ]);
+
+        $issuance = \Illuminate\Support\Facades\DB::table('ctpl_issuances')
+            ->where('transaction_id', $transaction_id)
+            ->first();
+
+        if ($issuance) {
+            // 1. I-update ang ctpl_issuances (Assured, Address, Agent, Amount)
+            \Illuminate\Support\Facades\DB::table('ctpl_issuances')
+                ->where('transaction_id', $transaction_id)
+                ->update([
+                    'assured' => $request->assured,
+                    'address' => $request->address,
+                    'agent' => $request->agent,
+                    'amount' => $request->amount,
+                    'updated_at' => now(),
+                ]);
+
+            // 2. I-update ang vehicles table (Lahat ng detalye ng sasakyan)
+            if ($issuance->vehicle_id) {
+                \Illuminate\Support\Facades\DB::table('vehicles')
+                    ->where('vehicle_id', $issuance->vehicle_id)
+                    ->update([
+                        'year_model' => $request->year_model,
+                        'make' => $request->make,
+                        'series' => $request->series,
+                        'denomination' => $request->denomination,
+                        'color' => $request->color,
+                        'plate_no' => $request->plate_no,
+                        'file_no' => $request->file_no,
+                        'engine_no' => $request->engine_no,
+                        'chassis_no' => $request->chassis_no,
+                        'updated_at' => now(),
+                    ]);
+            }
+        }
+
+        return redirect()->route('ctpl.logs')->with('success', 'Transaction updated successfully.');
+    }
+
+    public function cancelLog($transaction_id)
+    {
+        $issuance = \Illuminate\Support\Facades\DB::table('ctpl_issuances')
+            ->where('transaction_id', $transaction_id)
+            ->first();
+
+        if ($issuance) {
+            // Halimbawa, kung may status column ka sa ctpl_issuances:
+            \Illuminate\Support\Facades\DB::table('ctpl_issuances')
+                ->where('transaction_id', $transaction_id)
+                ->update([
+                    'status' => 'CANCELLED', // O kung anuman ang status field name mo
+                    'updated_at' => now(),
+                ]);
+            
+            // O kung gusto mo namang i-delete o burahin nang tuluyan sa database, palitan ito ng:
+            // DB::table('ctpl_issuances')->where('transaction_id', $transaction_id)->delete();
+        }
+
+        return redirect()->route('ctpl.logs')->with('success', 'Policy has been cancelled successfully.');
     }
 }

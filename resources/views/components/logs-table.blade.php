@@ -1,4 +1,4 @@
-<div id="logs-container" x-data="logsData()" class="bg-[#161b22] border border-[#30363d] rounded-xl shadow-lg relative">
+<div x-data="logsData()" class="bg-[#161b22] border border-[#30363d] rounded-xl shadow-lg relative">
 
     <!-- Search, Limiter & Filter Header Bar -->
     <div class="p-3 border-b border-[#30363d] flex flex-col sm:flex-row justify-between items-center gap-3 relative">
@@ -10,7 +10,8 @@
             <button type="button" 
                     @click="batchAction('Batch ISAP')"
                     :disabled="selectedLogs.length === 0"
-                    class="bg-[#1f6feb] hover:bg-[#388bfd] text-white font-medium px-3 py-1.5 rounded-lg transition text-xs shadow flex items-center gap-1.5 disabled:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed">
+                    :class="selectedLogs.length === 0 ? 'opacity-40 cursor-not-allowed bg-gray-800' : 'bg-[#1f6feb] hover:bg-[#388bfd] shadow'"
+                    class="text-white font-medium px-3 py-1.5 rounded-lg transition text-xs flex items-center gap-1.5">
                 <span>Batch ISAP</span>
                 <span x-show="selectedLogs.length > 0" class="bg-black/30 px-1.5 py-0.5 rounded-full text-[10px]" x-text="selectedLogs.length"></span>
             </button>
@@ -19,7 +20,8 @@
             <button type="button" 
                     @click="batchAction('Batch OICP')"
                     :disabled="selectedLogs.length === 0"
-                    class="bg-[#8957e5] hover:bg-[#a371f7] text-white font-medium px-3 py-1.5 rounded-lg transition text-xs shadow flex items-center gap-1.5 disabled:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed">
+                    :class="selectedLogs.length === 0 ? 'opacity-40 cursor-not-allowed bg-gray-800' : 'bg-[#8957e5] hover:bg-[#a371f7] shadow'"
+                    class="text-white font-medium px-3 py-1.5 rounded-lg transition text-xs flex items-center gap-1.5">
                 <span>Batch OICP</span>
                 <span x-show="selectedLogs.length > 0" class="bg-black/30 px-1.5 py-0.5 rounded-full text-[10px]" x-text="selectedLogs.length"></span>
             </button>
@@ -63,6 +65,7 @@
 
             <!-- Filter Dropdown Box -->
             <div x-show="showFilter" 
+                 x-cloak
                  @click.away="showFilter = false"
                  x-transition
                  class="absolute right-0 top-12 z-50 w-80 bg-[#161b22] border border-[#30363d] rounded-xl shadow-2xl p-4 text-xs">
@@ -91,10 +94,10 @@
         </div>
     </div>
 
-    <!-- Table Container (Compact Row Height) -->
+    <!-- Table Container -->
     <div id="logs-table-content" class="overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[700px]">
-            <thead>
+          <thead>
                 <tr class="border-b border-[#30363d] bg-[#161b22]">
                     <th class="px-3 py-1.5 w-10 text-center">
                         <input type="checkbox" @click="toggleSelectAll()" class="rounded bg-[#0d1117] border-[#30363d] text-[#58a6ff] focus:ring-0 cursor-pointer">
@@ -102,14 +105,13 @@
                     <th class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Assured Name</th>
                     <th class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 w-28">COC Number</th>
                     <th class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 w-32">Plate Number</th>
-                    <th class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 w-24">Agent</th>
+                    <th class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 w-40">Agent</th>
                     <th class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 w-36">Date Issued</th>
                     <th class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 w-20">Option</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-[#30363d]">
                 @forelse($logs as $log)
-                <!-- Nakakonekta na sa vehicles table gamit ang relationship na vehicle at tamang columns -->
                 <tr class="hover:bg-[#21262d]/50 transition duration-150" 
                     data-coc="{{ $log->coc_no ?? '' }}"
                     data-plate="{{ $log->plate_no ?? 'None' }}"
@@ -126,18 +128,180 @@
                                x-model="selectedLogs" 
                                class="log-checkbox rounded bg-[#0d1117] border-[#30363d] text-[#58a6ff] focus:ring-0 cursor-pointer">
                     </td>
-                    <td class="px-3 py-1 text-[11px] text-gray-300 font-medium">{{ $log->assured }}</td>
+
+                    <td class="px-3 py-1 text-[11px] text-gray-300 font-medium">
+                        <div class="max-w-[240px] sm:max-w-[300px] truncate" title="{{ $log->assured }}">
+                            {{ $log->assured }}
+                        </div>
+                    </td>
+
                     <td class="px-3 py-1 text-[11px] text-gray-300 font-mono">{{ $log->coc_no }}</td>
                     <td class="px-3 py-1 text-[11px] text-[#58a6ff] font-semibold">{{ $log->plate_no }}</td>
+                    
                     <td class="px-3 py-1 text-[11px] text-gray-400">
-                        <span class="px-1.5 py-0.2 border border-[#30363d] rounded text-[9px] font-mono bg-[#0d1117]">
+                        <span class="inline-block max-w-[140px] truncate align-middle px-1.5 py-0.2 border border-[#30363d] rounded text-[9px] font-mono bg-[#0d1117]" title="{{ $log->agent }}">
                             {{ $log->agent }}
                         </span>
                     </td>
+
                     <td class="px-3 py-1 text-[11px] text-gray-400 font-mono">{{ \Carbon\Carbon::parse($log->created_at)->format('Y-m-d H:i') }}</td>
-                    <td class="px-3 py-1 text-[11px]">
-                        <a href="{{ route('ctpl.show', $log->id) }}" class="text-[#58a6ff] hover:underline mr-1.5">View</a>
-                        <a href="#" class="text-[#2ea043] hover:underline">Edit</a>
+                    <td class="px-3 py-1 text-[11px]" x-data="{ openEditModal: false }">
+                        <a href="{{ route('ctpl.show', $log->transaction_id) }}" class="text-[#58a6ff] hover:underline mr-1.5">View</a>
+                        
+                        <!-- Trigger Button -->
+                        <button @click="openEditModal = true" type="button" class="text-[#2ea043] hover:underline bg-transparent border-0 p-0 cursor-pointer">
+                            Edit
+                        </button>
+
+                        <!-- Modal Overlay -->
+                        <div x-show="openEditModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
+                            
+                            <!-- Modal Box (Laki na kasya ang 3 columns) -->
+                            <div @click.away="openEditModal = false" class="bg-[#161b22] border border-[#30363d] rounded-xl shadow-2xl p-6 w-[98vw] max-w-[1500px] text-gray-200 text-left relative my-8">
+                                
+                                <!-- Header -->
+                                <div class="flex justify-between items-center mb-4 pb-3 border-b border-[#30363d]">
+                                    <h3 class="text-sm font-semibold text-gray-100">Edit Transaction Log (ID: {{ $log->transaction_id }})</h3>
+                                    <button @click="openEditModal = false" class="text-gray-400 hover:text-gray-200 text-base font-bold">✕</button>
+                                </div>
+
+                                <!-- Form na may 3 Columns -->
+                                <form action="{{ route('transaction-logs.update', $log->transaction_id) }}" method="POST">
+                                    @csrf
+                                    @method('PUT')
+
+                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs">
+                                        
+                                        <!-- 1. Assured Details -->
+                                        <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-4 space-y-3">
+                                            <h4 class="font-semibold text-[#58a6ff] pb-2 border-b border-[#30363d]">1. Assured Details</h4>
+                                            
+                                            <div>
+                                                <x-input-label value="Assured Name" class="text-[11px] text-gray-400 mb-1" />
+                                                <x-text-input name="assured" type="text" value="{{ $log->assured }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs uppercase" required />
+                                            </div>
+
+                                            <div>
+                                                <x-input-label value="Address" class="text-[11px] text-gray-400 mb-1" />
+                                                <x-text-input name="address" type="text" value="{{ $log->address }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs uppercase" required />
+                                            </div>
+                                        </div>
+
+                                        <!-- 2. Vehicle Specification -->
+                                        <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-4 space-y-3">
+                                            <h4 class="font-semibold text-[#58a6ff] pb-2 border-b border-[#30363d]">2. Vehicle Specification</h4>
+                                            
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <x-input-label value="Year Model" class="text-[11px] text-gray-400 mb-1" />
+                                                    <x-text-input name="year_model" type="text" value="{{ $log->year_model ?? '' }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs" />
+                                                </div>
+                                                <div>
+                                                    <x-input-label value="Make" class="text-[11px] text-gray-400 mb-1" />
+                                                    <x-text-input name="make" type="text" value="{{ $log->make ?? '' }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs uppercase" />
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <x-input-label value="Series" class="text-[11px] text-gray-400 mb-1" />
+                                                    <x-text-input name="series" type="text" value="{{ $log->series ?? '' }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs uppercase" />
+                                                </div>
+                                                <div>
+                                                    <x-input-label value="Color" class="text-[11px] text-gray-400 mb-1" />
+                                                    <x-text-input name="color" type="text" value="{{ $log->color ?? '' }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs uppercase" />
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <x-input-label value="MV File No." class="text-[11px] text-gray-400 mb-1" />
+                                                    <x-text-input name="file_no" type="text" value="{{ $log->mv_file ?? '' }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs uppercase" />
+                                                </div>
+                                                <div>
+                                                    <x-input-label value="Plate Number" class="text-[11px] text-gray-400 mb-1" />
+                                                    <x-text-input name="plate_no" type="text" value="{{ $log->plate_no ?? '' }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs uppercase" />
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <x-input-label value="Chassis Number" class="text-[11px] text-gray-400 mb-1" />
+                                                    <x-text-input name="chassis_no" type="text" value="{{ $log->chassis_no ?? '' }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs uppercase" />
+                                                </div>
+                                                <div>
+                                                    <x-input-label value="Engine Number" class="text-[11px] text-gray-400 mb-1" />
+                                                    <x-text-input name="engine_no" type="text" value="{{ $log->engine_no ?? '' }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs uppercase" />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <x-input-label value="Denomination" class="text-[11px] text-gray-400 mb-1" />
+                                                <x-text-input name="denomination" type="text" value="{{ $log->denomination ?? '' }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs uppercase" />
+                                            </div>
+                                        </div>
+
+                                        <!-- 3. Allocation and Payment (Locked Policy & COC) -->
+                                        <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-4 space-y-3 flex flex-col justify-between">
+                                            <div class="space-y-3">
+                                                <h4 class="font-semibold text-[#3fb950] pb-2 border-b border-[#30363d]">3. Allocation and Payment</h4>
+                                                
+                                                <!-- Locked COC -->
+                                                <div>
+                                                    <span class="block text-[10px] text-gray-400 mb-1 uppercase">COC Number (Locked)</span>
+                                                    <div class="w-full bg-[#161b22] border border-[#30363d] rounded-md px-3 py-2 text-xs text-gray-300 font-mono">
+                                                        {{ $log->coc_no ?? 'N/A' }}
+                                                    </div>
+                                                </div>
+
+                                                <!-- Locked Policy -->
+                                                <div>
+                                                    <span class="block text-[10px] text-gray-400 mb-1 uppercase">Policy Number (Locked)</span>
+                                                    <div class="w-full bg-[#161b22] border border-[#30363d] rounded-md px-3 py-2 text-xs text-gray-300 font-mono">
+                                                        {{ $log->policy_no }}
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <x-input-label value="Agent Name" class="text-[11px] text-gray-400 mb-1" />
+                                                    <x-text-input name="agent" type="text" value="{{ $log->agent ?? '' }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs uppercase" />
+                                                </div>
+
+                                                <div>
+                                                    <x-input-label value="Amount Paid (Premium)" class="text-[11px] text-gray-400 mb-1" />
+                                                    <x-text-input name="amount" type="text" value="{{ $log->amount ?? '' }}" class="w-full bg-[#161b22] text-gray-200 border-[#30363d] text-xs" />
+                                                </div>
+                                            </div>
+
+                                            <!-- Action Buttons sa loob ng Column 3 -->
+                                            <div class="pt-4 border-t border-[#30363d] flex items-center justify-between">
+                                                
+                                                <!-- Cancel Policy Button (Kulay Pula / Danger) -->
+                                                <form action="{{ route('transaction-logs.cancel', $log->transaction_id) }}" method="POST" onsubmit="return confirm('Sigurado ka bang gusto mong i-cancel ang policy na ito?');">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <button type="submit" class="px-3 py-2 bg-[#da3633] hover:bg-[#b62324] text-white rounded-md font-medium text-xs shadow transition-colors">
+                                                        Cancel Policy
+                                                    </button>
+                                                </form>
+
+                                                <!-- Save & Cancel Modal Buttons -->
+                                                <div class="flex gap-2">
+                                                    <button @click="openEditModal = false" type="button" class="px-3 py-2 bg-[#21262d] hover:bg-[#30363d] text-gray-300 rounded-md font-medium text-xs border border-[#30363d]">
+                                                        Close
+                                                    </button>
+                                                    <button type="submit" class="px-4 py-2 bg-[#2ea043] hover:bg-[#238636] text-white rounded-md font-medium text-xs shadow">
+                                                        Save Changes
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </form>
+
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 @empty
@@ -165,9 +329,10 @@
 </div>
 
 <style>
-    /* Ibinabalik ang summary text sa kaliwa at ginagawang maayos ang pagination links sa kanang bahagi */
+    [x-cloak] { display: none !important; }
+
     .custom-pagination-container nav > div:first-child {
-        display: none !important; /* Itinatago ang default na "Showing 1 to X..." ng Laravel para mapalitan ng custom natin sa kaliwa kung kinakailangan, o panatilihin kung gusto mo */
+        display: none !important;
     }
 
     .custom-pagination-container nav {
@@ -190,15 +355,15 @@
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        font-size: 11px !important;      
-        padding: 2px 6px !important;      
-        color: #8b949e !important;        
+        font-size: 11px !important;
+        padding: 2px 6px !important;
+        color: #8b949e !important;
         border-radius: 0px !important;
     }
 
     .custom-pagination-container nav span[aria-current="page"] span,
     .custom-pagination-container nav span[aria-current="page"] {
-        color: #58a6ff !important;        
+        color: #58a6ff !important;
         font-weight: 700 !important;
         background: transparent !important;
     }
@@ -282,7 +447,6 @@ function logsData() {
                         const taxType = '0';
                         const assuredTin = '111-111-111-11111';
 
-                        // 1. Kunin at i-map muna ang tamang MV_TYPE dito
                         const rawMvType = (row.getAttribute('data-mvtype') || '').trim().toUpperCase();
                         let mvType = 'HB';
                         switch (rawMvType) {
@@ -301,8 +465,7 @@ function logsData() {
                             default: mvType = rawMvType || 'HB';
                         }
 
-                        // 2. Pagkatapos makuha ang mvType, dito na ibabase ang PREM_TYPE
-                        let premType = '10'; // Default kung wala sa listahan
+                        let premType = '10';
                         switch (mvType) {
                             case 'C':
                             case 'SV':

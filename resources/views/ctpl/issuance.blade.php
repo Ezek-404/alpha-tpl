@@ -285,7 +285,7 @@
                 }">
 
             <!-- Quick Vehicle Search Card -->
-            <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-4 shadow-xl mb-6">
+            <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-4 shadow-xl mb-6 mt-6">
                 <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Quick Vehicle Search & Autofill</h3>
                 <div class="flex flex-col sm:flex-row gap-3">
                     <select x-model="searchType" class="bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] sm:w-1/4">

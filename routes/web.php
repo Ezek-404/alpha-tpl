@@ -27,9 +27,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/validate-coc', [CtplIssuanceController::class, 'validateCoc']);
     Route::get('/api/validate-policy', [CtplIssuanceController::class, 'validatePolicy']);
 
-    // Transaction Logs Route
+    // Transaction Logs Routes & Modal Update Route
     Route::get('/transaction-logs', [CtplIssuanceController::class, 'logs'])->name('ctpl.logs');
     Route::get('/ctpl-issuance/{id}/result', [CtplIssuanceController::class, 'showResult'])->name('ctpl.show');
+    
+    // Ruta para i-save ang mga binago sa modal (PUT method)
+    Route::put('/transaction-logs/{transaction_id}', [CtplIssuanceController::class, 'updateLog'])->name('transaction-logs.update');
+    Route::put('/transaction-logs/{transaction_id}/cancel', [CtplIssuanceController::class, 'cancelLog'])->name('transaction-logs.cancel');
     
 });
 
