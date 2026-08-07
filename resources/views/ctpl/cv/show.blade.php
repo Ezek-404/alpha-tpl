@@ -94,8 +94,8 @@
                 
                 <div class="absolute inset-0 text-[10px] font-bold uppercase tracking-tight data-container" style="font-family: 'Times New Roman', Times, serif !important;">
                     <!-- Invoice Date -->
-                    <div class="absolute top-[130px] left-[195px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d')) }}</div>
-                    <div class="absolute top-[130px] left-[278px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('y')) }}</div>
+                    <div class="absolute top-[127px] left-[195px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('M-d')) }}</div>
+                    <div class="absolute top-[127px] left-[278px]">{{ strtoupper(\Carbon\Carbon::parse($policy->created_at)->format('y')) }}</div>
 
                     <!-- Assured Name -->
                     <div class="absolute top-[152px] left-0 right-60 max-w-[300px] leading-tight text-center">
@@ -103,7 +103,7 @@
                     </div>
 
                     <!-- Plate Number -->
-                    <div class="absolute top-[187px] left-[228px]">{{ $policy->plate_no }}</div>
+                    <div class="absolute top-[183px] left-[228px]">{{ $policy->plate_no }}</div>
 
                     <!-- Amount (Ibinalik ang number_format at inayos ang left position para hindi lumagpas sa 580px container) -->
                     <div class="absolute top-[205px] left-[55px] text-right">{{ number_format($policy->amount, 2) }}</div>
