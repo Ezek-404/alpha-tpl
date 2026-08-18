@@ -177,7 +177,6 @@ class CtplIssuanceController extends Controller
         try {
             // 2. Check kung existing na ang vehicle gamit ang plate_no at file_no
             $vehicle = DB::table('vehicles')
-                ->where('plate_no', strtoupper($validated['plate_no']))
                 ->where('file_no', strtoupper($validated['mv_file']))
                 ->first();
 
@@ -188,13 +187,14 @@ class CtplIssuanceController extends Controller
                 'series'       => strtoupper($validated['series']),
                 'denomination' => $validated['denomination'],
                 'color'        => strtoupper($validated['color']),
+                'plate_no'     => strtoupper($validated['plate_no']), // Isinama na rin natin dito para mag-update kung nagbago
                 'chassis_no'   => strtoupper($validated['chassis_no']),
                 'engine_no'    => strtoupper($validated['engine_no']),
                 'updated_at'   => now(),
             ];
 
             if ($vehicle) {
-                // Kung meron na, i-update ang details nito
+                // Kung meron nang record gamit ang file_no, i-update ang details nito (pati bago o lumang plate_no)
                 DB::table('vehicles')
                     ->where('vehicle_id', $vehicle->vehicle_id)
                     ->update($vehicleData);
@@ -203,7 +203,6 @@ class CtplIssuanceController extends Controller
             } else {
                 // Kung wala pa, mag-i-insert ng bago
                 $vehicleData['file_no'] = strtoupper($validated['mv_file']);
-                $vehicleData['plate_no'] = strtoupper($validated['plate_no']);
                 $vehicleData['created_at'] = now();
                 
                 $vehicleId = DB::table('vehicles')->insertGetId($vehicleData);

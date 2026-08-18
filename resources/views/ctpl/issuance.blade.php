@@ -485,16 +485,17 @@
                                     class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg pl-7 pr-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] disabled:cursor-not-allowed">
                             </div>
                         </div>
+
+                        <div>
+                            <button type="submit" :disabled="!isFormValid()"
+                                    class="w-full py-2 rounded-lg text-xs font-semibold transition shadow-md text-white
+                                        disabled:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed
+                                        bg-[#238636] hover:bg-[#2ea043]">
+                                Issue CTPL Policy
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="pt-4">
-                        <button type="submit" :disabled="!isFormValid()"
-                                class="w-full py-2 rounded-lg text-xs font-semibold transition shadow-md text-white
-                                       disabled:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed
-                                       bg-[#238636] hover:bg-[#2ea043]">
-                            Issue CTPL Policy
-                        </button>
-                    </div>
                 </div>
 
             </form>

@@ -159,6 +159,19 @@
                 position: relative !important;
                 display: block !important;
                 font-family: 'Times New Roman', Times, serif !important;
+                transform: translate(-5px, -5px) !important;
+            }
+
+            /* Maaari mong i-adjust ang pwesto rito kung sakaling umangat o lumihis ang print (halimbawa: translate(0px, -2px)) */
+            #tab-invoice-container {
+                background-image: none !important;
+                box-shadow: none;
+                width: 8.5in !important;
+                height: 10.5in !important;
+                position: relative !important;
+                display: block !important;
+                font-family: 'Times New Roman', Times, serif !important;
+                /*transform: translate(0px, 0px) !important;*/
             }
 
             #page-coc {
