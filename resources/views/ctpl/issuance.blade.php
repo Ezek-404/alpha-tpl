@@ -112,6 +112,7 @@
                      this.policyError = '';
                      this.searchResults = [];
                      this.searchValue = '';
+                     this.searchError = '';
                  },
 
                  hasUnsavedChanges() {
@@ -124,6 +125,14 @@
                  },
 
                  init() {
+                     // Watcher para awtomatikong i-clear ang results at error kapag blangko na ang searchValue
+                     this.$watch('searchValue', value => {
+                         if (!value || value.trim() === '') {
+                             this.searchResults = [];
+                             this.searchError = '';
+                         }
+                     });
+
                      window.addEventListener('beforeunload', (event) => {
                          if (this.hasUnsavedChanges()) {
                              event.preventDefault();
@@ -277,12 +286,12 @@
 
                  isFormValid() {
                      return this.isSection1And2Valid() &&
-                         this.isCocVerified &&
-                         this.isPolicyVerified && 
-                         this.agent.trim() !== '' &&
-                         this.amount !== '';
+                        this.isCocVerified &&
+                        this.isPolicyVerified && 
+                        this.agent.trim() !== '' &&
+                        this.amount !== '';
                  }
-                }">
+             }">
 
             <!-- Quick Vehicle Search Card -->
             <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-4 shadow-xl mb-6 mt-6">
@@ -317,11 +326,15 @@
                     <div class="space-y-2 max-h-48 overflow-y-auto">
                         <template x-for="item in searchResults" :key="item.vehicle_id || item.plate_no">
                             <div @click="selectVehicle(item)" 
-                               class="bg-[#0d1117] border border-[#30363d] hover:border-[#58a6ff] p-2.5 rounded-lg cursor-pointer flex justify-between items-center transition">
+                                class="bg-[#0d1117] border border-[#30363d] hover:border-[#58a6ff] p-2.5 rounded-lg cursor-pointer flex justify-between items-center transition">
                                 <div>
-                                    <span class="font-bold text-[#58a6ff]" x-text="item.plate_no || item.file_no"></span> 
-                                    <span class="text-gray-300 ml-2" x-text="(item.make || '') + ' ' + (item.series || '')"></span>
-                                    <span class="text-gray-500 text-[10px] block" x-text="'Assured: ' + (item.assured || 'N/A')"></span>
+                                    <!-- Nilagyan ng Year Model sa tabi ng Make & Series -->
+                                    <div>
+                                        <span class="font-bold text-[#58a6ff]" x-text="item.plate_no || item.file_no"></span> 
+                                        <span class="text-gray-300 ml-2" x-text="(item.year_model ? item.year_model + ' - ' : '') + (item.make || '') + ' ' + (item.series || '')"></span>
+                                    </div>
+                                    <!-- Idinagdag ang Address kasama ang Assured Name -->
+                                    <span class="text-gray-500 text-[11px] block" x-text="'Assured: ' + (item.assured || 'N/A') + (item.address ? ' | Address: ' + item.address : '')"></span>
                                 </div>
                                 <span class="text-[10px] bg-[#238636] text-white px-2.5 py-1 rounded font-medium">Select</span>
                             </div>
