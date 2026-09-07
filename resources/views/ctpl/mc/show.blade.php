@@ -159,7 +159,7 @@
                 position: relative !important;
                 display: block !important;
                 font-family: 'Times New Roman', Times, serif !important;
-                transform: translate(-5px, -5px) !important;
+                transform: translate(-5px, -8px) !important;
             }
 
             /* Maaari mong i-adjust ang pwesto rito kung sakaling umangat o lumihis ang print (halimbawa: translate(0px, -2px)) */
@@ -171,7 +171,7 @@
                 position: relative !important;
                 display: block !important;
                 font-family: 'Times New Roman', Times, serif !important;
-                /*transform: translate(0px, 0px) !important;*/
+                transform: translate(15px, -5px) !important;
             }
 
             #page-coc {

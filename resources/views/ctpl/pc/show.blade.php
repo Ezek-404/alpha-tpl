@@ -171,7 +171,7 @@
                 position: relative !important;
                 display: block !important;
                 font-family: 'Times New Roman', Times, serif !important;
-                /*transform: translate(0px, 0px) !important;*/
+                transform: translate(15px, -2px) !important;
             }
 
             #page-coc {
