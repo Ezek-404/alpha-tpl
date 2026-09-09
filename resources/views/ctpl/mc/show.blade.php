@@ -59,7 +59,7 @@
 
                 <!-- Page 2: Stand-Alone Private Car Policy -->
                 <div id="page-policy" class="relative w-full max-w-[850px] mx-auto bg-white shadow-2xl overflow-hidden print:shadow-none print:w-full block">
-                    <img src="{{ asset('images/mc_policy.jpg') }}" alt="Private Car Policy Template" class="w-full h-auto block print:hidden">
+                    <img src="{{ asset('images/pc_policy.jpg') }}" alt="Private Car Policy Template" class="w-full h-auto block print:hidden">
                     
                     <div class="absolute inset-0 text-[11px] font-bold uppercase tracking-tight data-container" style="font-family: 'Times New Roman', Times, serif !important;">
                         <div class="absolute top-[190px] left-[585px]">{{ $policy->policy_no }}</div>
