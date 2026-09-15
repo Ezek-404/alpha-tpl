@@ -359,7 +359,7 @@
 
                     <div>
                         <label class="block text-xs text-gray-400 mb-1 font-medium">Address</label>
-                        <input type="text" name="address" x-model="address" maxlength="100" required placeholder="COMPLETE ADDRESS" 
+                        <input type="text" name="address" x-model="address" maxlength="250" required placeholder="COMPLETE ADDRESS" 
                             class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff] uppercase">
                     </div>
                 </div>
