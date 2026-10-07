@@ -23,12 +23,22 @@ class CtplIssuanceController extends Controller
         }
 
         try {
-            // Simulan sa 'vehicles' table para lumabas ang lahat ng sasakyan kahit wala pang ctpl_issuances record
+            // Gamitin ang MAX(transaction_id) para makuha ang pinakabagong buong row ng ctpl_issuances ng sasakyan na ito
             $query = DB::table('vehicles')
-                        ->leftJoin('ctpl_issuances', 'vehicles.vehicle_id', '=', 'ctpl_issuances.vehicle_id');
+                ->leftJoin('ctpl_issuances', function ($join) {
+                    $join->on('vehicles.vehicle_id', '=', 'ctpl_issuances.vehicle_id')
+                         ->whereRaw('ctpl_issuances.transaction_id = (SELECT MAX(ci.transaction_id) FROM ctpl_issuances ci WHERE ci.vehicle_id = vehicles.vehicle_id)');
+                });
 
-            // Piliin ang mga kolum (gamitin ang latest o kung ano ang meron)
-            $query->select('vehicles.*', 'ctpl_issuances.assured', 'ctpl_issuances.address');
+            // Piliin ang mga kolum kasama ang agent at amount
+            $query->select(
+                'vehicles.*', 
+                'ctpl_issuances.assured', 
+                'ctpl_issuances.address',
+                'ctpl_issuances.created_at as last_transaction_date',
+                'ctpl_issuances.agent',
+                'ctpl_issuances.amount'
+            );
 
             // I-filter depende sa search type
             if ($type === 'assured') {
@@ -38,8 +48,10 @@ class CtplIssuanceController extends Controller
             } elseif (in_array($type, ['plate_no', 'file_no', 'engine_no', 'chassis_no'])) {
                 $query->where('vehicles.' . $type, 'LIKE', '%' . $value . '%');
             } else {
-                $query->where('vehicles.plate_no', 'LIKE', '%' . $value . '%')
-                    ->orWhere('vehicles.file_no', 'LIKE', '%' . $value . '%');
+                $query->where(function($q) use ($value) {
+                    $q->where('vehicles.plate_no', 'LIKE', '%' . $value . '%')
+                      ->orWhere('vehicles.file_no', 'LIKE', '%' . $value . '%');
+                });
             }
 
             $results = $query->limit(10)->get();
