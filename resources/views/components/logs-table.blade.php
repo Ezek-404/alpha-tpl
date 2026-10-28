@@ -114,12 +114,17 @@
                 @forelse($logs as $log)
                 <tr class="hover:bg-[#21262d]/50 transition duration-150" 
                     data-coc="{{ $log->coc_no ?? '' }}"
+                    data-policy="{{ $log->policy_no ?? '' }}"
                     data-plate="{{ $log->plate_no ?? 'None' }}"
                     data-assured="{{ $log->assured ?? 'None' }}"
                     data-mvtype="{{ $log->denomination ?? 'HB' }}"
                     data-mvfile="{{ $log->mv_file ?? 'None' }}" 
                     data-motor="{{ $log->engine_no ?? 'None' }}" 
                     data-chassis="{{ $log->chassis_no ?? 'None' }}"
+                    data-color="{{ $log->color ?? '' }}"
+                    data-series="{{ $log->series ?? '' }}"
+                    data-make="{{ $log->make ?? '' }}"
+                    data-year="{{ $log->year_model ?? '' }}"
                     data-created="{{ $log->created_at }}">
                     
                     <td class="px-3 py-1 text-center">
@@ -512,112 +517,105 @@ function logsData() {
                 document.body.removeChild(link);
 
             } else if (type === 'Batch OICP') {
-                // Define Header based on your column list
-                let oicpData = [
-                    [
-                        "Transaction Type", "Authentication Type", "Car Type", "Serial/Chassis No", 
-                        "Motor No./Engine No.", "Plate No", "MV file Number", "Assured Name", 
-                        "Assured Address", "Mobile Number", "Email Address", "O.R Number", 
-                        "COC Number", "Policy Number", "Assured TIN", "Inception Date", 
-                        "Expiration Date To", "Vehicle Type", "LTO MV Type", "LTO Branch", 
-                        "Series/Model", "Vehicle Make", "Year", "Body Type", "Color", 
-                        "Unladen Weight / GVW (KG)", "Authorized Capacity (KG)"
-                    ]
-                ];
-
-                rows.forEach(row => {
-                    const checkbox = row.querySelector('.log-checkbox');
-                    if (checkbox && this.selectedLogs.includes(checkbox.value)) {
-                        
-                        let denom = (row.getAttribute('data-mvtype') || '').trim().toUpperCase();
-                        
-                        // 1. Vehicle Type (OICP Category) Mapping Logic
-                        let oicpVehicleType = "Private Car";
-                        if (["CAR", "UTILITY VEHICLE", "SEDAN", "SUV", "HATCHBACK", "COUPE", "PASSENGER CAR"].includes(denom)) {
-                            oicpVehicleType = "Private Car";
-                        } else if (denom.includes("TRUCK")) {
-                            oicpVehicleType = "Heavy Trucks";
-                        } else if (["MC", "MTC", "TRICYCLE"].includes(denom)) {
-                            oicpVehicleType = "Motorcycles/Tricycles, Trailers";
-                        }
-
-                        // 2. LTO MV Type Mapping Logic
-                        let ltoMvType = "";
-                        if (denom === "SUV") {
-                            ltoMvType = "SV";
-                        } else if (denom === "UTILITY VEHICLE") {
-                            ltoMvType = "UV";
-                        } else if (["CAR", "SEDAN", "HATCHBACK", "COUPE", "PASSENGER"].some(type => denom.includes(type))) {
-                            ltoMvType = "C";
-                        } else if (denom.includes("TRUCK")) {
-                            ltoMvType = "TK";
-                        } else if (denom === "MC") {
-                            ltoMvType = "M";
-                        } else if (denom === "MTC") {
-                            ltoMvType = "MS";
-                        } else if (denom === "TRICYCLE") {
-                            ltoMvType = "TC";
-                        } else {
-                            ltoMvType = denom;
-                        }
-
-                        // 3. Date Processing (YYYY-MM-DD)
-                        let dateStr = (row.getAttribute('data-created') || '').split('|')[0].trim();
-                        let inceDateObj = new Date(dateStr);
-                        if (isNaN(inceDateObj.getTime())) inceDateObj = new Date();
-                        let inceDate = formatToYYYYMMDD(inceDateObj);
-
-                        let expiDateObj = new Date(inceDateObj.getTime());
-                        expiDateObj.setFullYear(expiDateObj.getFullYear() + 1);
-                        let expiDate = formatToYYYYMMDD(expiDateObj);
-
-                        // 4. COC Number na may "TS" Prefix
-                        let rawCoc = row.getAttribute('data-coc') || '';
-                        let cocNumberWithTS = rawCoc.startsWith("TS") ? rawCoc : "TS" + rawCoc;
-
-                        // 5. Row Mapping
-                        oicpData.push([
-                            "RENEW",                                     // Transaction Type
-                            "Manual",                                    // Authentication Type
-                            "Vehicle",                                   // Car Type
-                            row.getAttribute('data-chassis') || '',      // Serial/Chassis No
-                            row.getAttribute('data-motor') || '',        // Motor No./Engine No.
-                            row.getAttribute('data-plate') || '',        // Plate No
-                            row.getAttribute('data-mvfile') || '',       // MV file Number
-                            row.getAttribute('data-assured') || '',      // Assured Name
-                            row.getAttribute('data-address') || 'N/A',   // Assured Address
-                            "09209167801",                               // Mobile Number
-                            "TESS_ALPHA1@GMAIL.COM",                     // Email Address
-                            "-",                                         // O.R Number
-                            cocNumberWithTS,                             // COC Number
-                            row.getAttribute('data-policy') || '',       // Policy Number
-                            "11111111111",                               // Assured TIN
-                            inceDate,                                    // Inception Date
-                            expiDate,                                    // Expiration Date To
-                            oicpVehicleType,                             // Vehicle Type
-                            ltoMvType,                                   // LTO MV Type
-                            "-",                                         // LTO Branch
-                            row.getAttribute('data-series') || '',       // Series/Model
-                            row.getAttribute('data-make') || '',         // Vehicle Make
-                            row.getAttribute('data-year') || '',         // Year
-                            denom,                                       // Body Type
-                            row.getAttribute('data-color') || '',        // Color
-                            row.getAttribute('data-weight') || '0',      // Unladen Weight / GVW (KG)
-                            row.getAttribute('data-capacity') || '0'     // Authorized Capacity (KG)
-                        ]);
-                    }
-                });
-
-                // Generate Excel using SheetJS (XLSX)
                 if (typeof XLSX === 'undefined') {
                     alert('SheetJS (xlsx) library is not loaded.');
                     return;
                 }
 
-                let wb = XLSX.utils.book_new();
-                let ws = XLSX.utils.aoa_to_sheet(oicpData);
-                XLSX.utils.book_append_sheet(wb, ws, "OICP Template");
-                XLSX.writeFile(wb, "OICP_Authenticate_" + new Date().getTime() + ".xlsx");
+                fetch('/batch_template.xlsx')
+                    .then(response => response.arrayBuffer())
+                    .then(data => {
+                        let workbook = XLSX.read(data, { type: 'array' });
+                        let firstSheetName = workbook.SheetNames[0];
+                        let worksheet = workbook.Sheets[firstSheetName];
+
+                        let rowIndex = 2;
+
+                        rows.forEach(row => {
+                            const checkbox = row.querySelector('.log-checkbox');
+                            if (checkbox && this.selectedLogs.includes(checkbox.value)) {
+                                
+                                let denom = (row.getAttribute('data-mvtype') || '').trim().toUpperCase();
+                                
+                                let oicpVehicleType = "Private Car";
+                                if (["CAR", "UTILITY VEHICLE", "SEDAN", "SUV", "HATCHBACK", "COUPE", "PASSENGER CAR"].includes(denom)) {
+                                    oicpVehicleType = "Private Car";
+                                } else if (denom.includes("TRUCK")) {
+                                    oicpVehicleType = "Heavy Trucks";
+                                } else if (["MC", "MTC", "TRICYCLE"].includes(denom)) {
+                                    oicpVehicleType = "Motorcycles/Tricycles, Trailers";
+                                }
+
+                                let ltoMvType = "";
+                                if (denom === "SUV") {
+                                    ltoMvType = "SV";
+                                } else if (denom === "UTILITY VEHICLE") {
+                                    ltoMvType = "UV";
+                                } else if (["CAR", "SEDAN", "HATCHBACK", "COUPE", "PASSENGER"].some(type => denom.includes(type))) {
+                                    ltoMvType = "C";
+                                } else if (denom.includes("TRUCK")) {
+                                    ltoMvType = "TK";
+                                } else if (denom === "MC") {
+                                    ltoMvType = "M";
+                                } else if (denom === "MTC") {
+                                    ltoMvType = "MS";
+                                } else if (denom === "TRICYCLE") {
+                                    ltoMvType = "TC";
+                                } else {
+                                    ltoMvType = denom;
+                                }
+
+                                // Date Processing (Gawing Date object para maging tunay na Date format sa Excel)
+                                let rawDateStr = (row.getAttribute('data-created') || '').trim();
+                                let formattedDateStr = rawDateStr.includes(' ') ? rawDateStr.replace(' ', 'T') : rawDateStr;
+                                let inceDateObj = new Date(formattedDateStr);
+                                if (isNaN(inceDateObj.getTime())) inceDateObj = new Date();
+                                
+                                let expiDateObj = new Date(inceDateObj.getTime());
+                                expiDateObj.setFullYear(expiDateObj.getFullYear() + 1);
+
+                                let rawCoc = row.getAttribute('data-coc') || '';
+                                let cocNumberWithTS = rawCoc.startsWith("TS") ? rawCoc : "TS" + rawCoc;
+
+                                let rowData = [
+                                    "RENEW",
+                                    "Manual",
+                                    "Vehicle",
+                                    row.getAttribute('data-chassis') || '',
+                                    row.getAttribute('data-motor') || '',
+                                    row.getAttribute('data-plate') || '',
+                                    row.getAttribute('data-mvfile') || '',
+                                    row.getAttribute('data-assured') || '',
+                                    row.getAttribute('data-address') || 'N/A',
+                                    "09209167801",
+                                    "TESS_ALPHA1@GMAIL.COM",
+                                    "-",
+                                    cocNumberWithTS,
+                                    row.getAttribute('data-policy') || '',
+                                    "11111111111",
+                                    { v: inceDateObj, t: 'd', z: 'mm/dd/yyyy' }, // P: Inception Date (Date format)
+                                    { v: expiDateObj, t: 'd', z: 'mm/dd/yyyy' }, // Q: Expiration Date (Date format)
+                                    oicpVehicleType,
+                                    ltoMvType,
+                                    "-",
+                                    row.getAttribute('data-series') || '',
+                                    row.getAttribute('data-make') || '',
+                                    row.getAttribute('data-year') || '',
+                                    denom,
+                                    row.getAttribute('data-color') || ''
+                                ];
+
+                                XLSX.utils.sheet_add_aoa(worksheet, [rowData], { origin: `A${rowIndex}` });
+                                rowIndex++;
+                            }
+                        });
+
+                        XLSX.writeFile(workbook, "OICP_Authenticate_" + new Date().getTime() + ".xlsx");
+                    })
+                    .catch(error => {
+                        console.error('Error loading template:', error);
+                        alert('Hindi ma-load ang Excel template file.');
+                    });
             }
         }
     }
