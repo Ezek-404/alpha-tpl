@@ -1,30 +1,52 @@
 <div x-data="logsData()" class="bg-[#161b22] border border-[#30363d] rounded-xl shadow-lg relative">
+    
+    <!-- Tab Navigation Header Section -->
+    <div class="px-4 pt-3 pb-2 border-b border-[#30363d]">
+        <nav class="flex space-x-8" aria-label="Tabs">
+            <a href="{{ request()->fullUrlWithQuery(['tab' => 'all', 'page' => 1]) }}" 
+               class="py-2 px-1 border-b-2 font-medium text-xs transition duration-150 {{ request('tab', 'all') === 'all' ? 'border-[#58a6ff] text-[#58a6ff]' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300' }}">
+                All Transactions
+            </a>
+            <a href="{{ request()->fullUrlWithQuery(['tab' => 'isap', 'page' => 1]) }}" 
+               class="py-2 px-1 border-b-2 font-medium text-xs transition duration-150 {{ request('tab') === 'isap' ? 'border-[#58a6ff] text-[#58a6ff]' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300' }}">
+                ISAP
+            </a>
+            <a href="{{ request()->fullUrlWithQuery(['tab' => 'oicp', 'page' => 1]) }}" 
+               class="py-2 px-1 border-b-2 font-medium text-xs transition duration-150 {{ request('tab') === 'oicp' ? 'border-[#58a6ff] text-[#58a6ff]' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300' }}">
+                OICP
+            </a>
+        </nav>
+    </div>
 
     <!-- Search, Limiter & Filter Header Bar -->
     <div class="p-3 border-b border-[#30363d] flex flex-col sm:flex-row justify-between items-center gap-3 relative">
         
-        <!-- Left Side: Batch Buttons & Limiter -->
+        <!-- Left Side: Dynamic Batch Button & Limiter -->
         <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             
-            <!-- Batch ISAP Button -->
-            <button type="button" 
-                    @click="batchAction('Batch ISAP')"
-                    :disabled="selectedLogs.length === 0"
-                    :class="selectedLogs.length === 0 ? 'opacity-40 cursor-not-allowed bg-gray-800' : 'bg-[#1f6feb] hover:bg-[#388bfd] shadow'"
-                    class="text-white font-medium px-3 py-1.5 rounded-lg transition text-xs flex items-center gap-1.5">
-                <span>Batch ISAP</span>
-                <span x-show="selectedLogs.length > 0" class="bg-black/30 px-1.5 py-0.5 rounded-full text-[10px]" x-text="selectedLogs.length"></span>
-            </button>
+            <!-- Lalabas lamang kung nasa 'isap' tab -->
+            @if(request('tab') === 'isap')
+                <button type="button" 
+                        @click="batchAction('Batch ISAP')"
+                        :disabled="selectedLogs.length === 0"
+                        :class="selectedLogs.length === 0 ? 'opacity-40 cursor-not-allowed bg-gray-800' : 'bg-[#1f6feb] hover:bg-[#388bfd] shadow'"
+                        class="text-white font-medium px-3 py-1.5 rounded-lg transition text-xs flex items-center gap-1.5">
+                    <span>Batch Authenticate</span>
+                    <span x-show="selectedLogs.length > 0" class="bg-black/30 px-1.5 py-0.5 rounded-full text-[10px]" x-text="selectedLogs.length"></span>
+                </button>
+            @endif
 
-            <!-- Batch OICP Button -->
-            <button type="button" 
-                    @click="batchAction('Batch OICP')"
-                    :disabled="selectedLogs.length === 0"
-                    :class="selectedLogs.length === 0 ? 'opacity-40 cursor-not-allowed bg-gray-800' : 'bg-[#8957e5] hover:bg-[#a371f7] shadow'"
-                    class="text-white font-medium px-3 py-1.5 rounded-lg transition text-xs flex items-center gap-1.5">
-                <span>Batch OICP</span>
-                <span x-show="selectedLogs.length > 0" class="bg-black/30 px-1.5 py-0.5 rounded-full text-[10px]" x-text="selectedLogs.length"></span>
-            </button>
+            <!-- Lalabas lamang kung nasa 'oicp' tab -->
+            @if(request('tab') === 'oicp')
+                <button type="button" 
+                        @click="batchAction('Batch OICP')"
+                        :disabled="selectedLogs.length === 0"
+                        :class="selectedLogs.length === 0 ? 'opacity-40 cursor-not-allowed bg-gray-800' : 'bg-[#8957e5] hover:bg-[#a371f7] shadow'"
+                        class="text-white font-medium px-3 py-1.5 rounded-lg transition text-xs flex items-center gap-1.5">
+                    <span>Batch Authenticate</span>
+                    <span x-show="selectedLogs.length > 0" class="bg-black/30 px-1.5 py-0.5 rounded-full text-[10px]" x-text="selectedLogs.length"></span>
+                </button>
+            @endif
 
             <!-- Limiter -->
             <div class="flex items-center gap-1.5 text-xs text-gray-400 ml-1">
@@ -97,11 +119,13 @@
     <!-- Table Container -->
     <div id="logs-table-content" class="overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[700px]">
-          <thead>
+            <thead>
                 <tr class="border-b border-[#30363d] bg-[#161b22]">
-                    <th class="px-3 py-1.5 w-10 text-center">
-                        <input type="checkbox" @click="toggleSelectAll()" class="rounded bg-[#0d1117] border-[#30363d] text-[#58a6ff] focus:ring-0 cursor-pointer">
-                    </th>
+                    @if(request('tab') === 'isap' || request('tab') === 'oicp')
+                        <th class="px-3 py-1.5 w-10 text-center">
+                            <input type="checkbox" @click="toggleSelectAll()" class="rounded bg-[#0d1117] border-[#30363d] text-[#58a6ff] focus:ring-0 cursor-pointer">
+                        </th>
+                    @endif
                     <th class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Assured Name</th>
                     <th class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 w-28">COC Number</th>
                     <th class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 w-32">Plate Number</th>
@@ -117,6 +141,7 @@
                     data-policy="{{ $log->policy_no ?? '' }}"
                     data-plate="{{ $log->plate_no ?? 'None' }}"
                     data-assured="{{ $log->assured ?? 'None' }}"
+                    data-address="{{ $log->address ?? 'None' }}"
                     data-mvtype="{{ $log->denomination ?? 'HB' }}"
                     data-mvfile="{{ $log->mv_file ?? 'None' }}" 
                     data-motor="{{ $log->engine_no ?? 'None' }}" 
@@ -127,12 +152,14 @@
                     data-year="{{ $log->year_model ?? '' }}"
                     data-created="{{ $log->created_at }}">
                     
-                    <td class="px-3 py-1 text-center">
-                        <input type="checkbox" 
-                               value="{{ $log->id }}" 
-                               x-model="selectedLogs" 
-                               class="log-checkbox rounded bg-[#0d1117] border-[#30363d] text-[#58a6ff] focus:ring-0 cursor-pointer">
-                    </td>
+                    @if(request('tab') === 'isap' || request('tab') === 'oicp')
+                        <td class="px-3 py-1 text-center">
+                            <input type="checkbox" 
+                                value="{{ $log->id }}" 
+                                x-model="selectedLogs" 
+                                class="log-checkbox rounded bg-[#0d1117] border-[#30363d] text-[#58a6ff] focus:ring-0 cursor-pointer">
+                        </td>
+                    @endif
 
                     <td class="px-3 py-1 text-[11px] text-gray-300 font-medium">
                         <div class="max-w-[240px] sm:max-w-[300px] truncate" title="{{ $log->assured }}">
@@ -161,7 +188,7 @@
                         <!-- Modal Overlay -->
                         <div x-show="openEditModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
                             
-                            <!-- Modal Box (Laki na kasya ang 3 columns) -->
+                            <!-- Modal Box -->
                             <div @click.away="openEditModal = false" class="bg-[#161b22] border border-[#30363d] rounded-xl shadow-2xl p-6 w-[98vw] max-w-[1500px] text-gray-200 text-left relative my-8">
                                 
                                 <!-- Header -->
@@ -179,7 +206,7 @@
                                         
                                         <!-- 1. Assured Details -->
                                         <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-4 space-y-3">
-                                            <h4 class="font-semibold text-[#58a6ff] pb-2 border-b border-[#30363d]">1. Assured Details</h4>
+                                            <h4 class="font-semibold text-[#58a6ff] pb-2 border-b border-[#30363d]">Assured Details</h4>
                                             
                                             <div>
                                                 <x-input-label value="Assured Name" class="text-[11px] text-gray-400 mb-1" />
@@ -246,12 +273,11 @@
                                             </div>
                                         </div>
 
-                                        <!-- 3. Allocation and Payment (Locked Policy & COC) -->
+                                        <!-- 3. Allocation and Payment -->
                                         <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-4 space-y-3 flex flex-col justify-between">
                                             <div class="space-y-3">
                                                 <h4 class="font-semibold text-[#3fb950] pb-2 border-b border-[#30363d]">3. Allocation and Payment</h4>
                                                 
-                                                <!-- Locked COC -->
                                                 <div>
                                                     <span class="block text-[10px] text-gray-400 mb-1 uppercase">COC Number (Locked)</span>
                                                     <div class="w-full bg-[#161b22] border border-[#30363d] rounded-md px-3 py-2 text-xs text-gray-300 font-mono">
@@ -259,7 +285,6 @@
                                                     </div>
                                                 </div>
 
-                                                <!-- Locked Policy -->
                                                 <div>
                                                     <span class="block text-[10px] text-gray-400 mb-1 uppercase">Policy Number (Locked)</span>
                                                     <div class="w-full bg-[#161b22] border border-[#30363d] rounded-md px-3 py-2 text-xs text-gray-300 font-mono">
@@ -278,10 +303,7 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Action Buttons sa loob ng Column 3 -->
                                             <div class="pt-4 border-t border-[#30363d] flex items-center justify-between">
-                                                
-                                                <!-- Cancel Policy Button (Kulay Pula / Danger) -->
                                                 <form action="{{ route('transaction-logs.cancel', $log->transaction_id) }}" method="POST" onsubmit="return confirm('Sigurado ka bang gusto mong i-cancel ang policy na ito?');">
                                                     @csrf
                                                     @method('PUT')
@@ -290,7 +312,6 @@
                                                     </button>
                                                 </form>
 
-                                                <!-- Save & Cancel Modal Buttons -->
                                                 <div class="flex gap-2">
                                                     <button @click="openEditModal = false" type="button" class="px-3 py-2 bg-[#21262d] hover:bg-[#30363d] text-gray-300 rounded-md font-medium text-xs border border-[#30363d]">
                                                         Close
@@ -310,7 +331,11 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="px-3 py-3 text-center text-xs text-gray-400">No records found within this date range.</td></tr>
+                <tr>
+                    <td colspan="{{ request('tab') === 'isap' || request('tab') === 'oicp' ? 7 : 6 }}" class="px-3 py-3 text-center text-xs text-gray-400">
+                        No records found within this date range.
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>
@@ -405,12 +430,22 @@ function logsData() {
         },
 
         async performSearch() {
-            const response = await fetch(`/transaction-logs?search=${this.search}&from=${this.from}&to=${this.to}&per_page=${this.perPage}`);
+            // Kunin ang active tab (all, isap, oicp) mula sa URL para hindi maghalo ang data
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentTab = urlParams.get('tab') || 'all';
+
+            const response = await fetch(`/transaction-logs?tab=${currentTab}&search=${encodeURIComponent(this.search)}&from=${this.from}&to=${this.to}&per_page=${this.perPage}`);
             const html = await response.text();
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
+            
             document.getElementById('logs-table-content').innerHTML = doc.getElementById('logs-table-content').innerHTML;
             document.getElementById('logs-pagination').innerHTML = doc.getElementById('logs-pagination').innerHTML;
+            
+            // I-update din ang browser URL nang hindi nire-reload ang buong page
+            const newUrl = `/transaction-logs?tab=${currentTab}&search=${encodeURIComponent(this.search)}&from=${this.from}&to=${this.to}&per_page=${this.perPage}`;
+            window.history.pushState({}, '', newUrl);
+
             this.selectedLogs = [];
         },
 
@@ -511,7 +546,7 @@ function logsData() {
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.setAttribute('href', url);
-                link.setAttribute('download', 'SampleBatchISAP.csv');
+                link.setAttribute('download', 'ISAPBatchAuthenticate.csv');
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -565,7 +600,6 @@ function logsData() {
                                     ltoMvType = denom;
                                 }
 
-                                // Date Processing (Gawing Date object para maging tunay na Date format sa Excel)
                                 let rawDateStr = (row.getAttribute('data-created') || '').trim();
                                 let formattedDateStr = rawDateStr.includes(' ') ? rawDateStr.replace(' ', 'T') : rawDateStr;
                                 let inceDateObj = new Date(formattedDateStr);
@@ -593,8 +627,8 @@ function logsData() {
                                     cocNumberWithTS,
                                     row.getAttribute('data-policy') || '',
                                     "11111111111",
-                                    { v: inceDateObj, t: 'd', z: 'mm/dd/yyyy' }, // P: Inception Date (Date format)
-                                    { v: expiDateObj, t: 'd', z: 'mm/dd/yyyy' }, // Q: Expiration Date (Date format)
+                                    { v: inceDateObj, t: 'd', z: 'mm/dd/yyyy' },
+                                    { v: expiDateObj, t: 'd', z: 'mm/dd/yyyy' },
                                     oicpVehicleType,
                                     ltoMvType,
                                     "-",
@@ -610,7 +644,7 @@ function logsData() {
                             }
                         });
 
-                        XLSX.writeFile(workbook, "OICP_Authenticate_" + new Date().getTime() + ".xlsx");
+                        XLSX.writeFile(workbook, "OICPBatchAuthenticate" + new Date().getTime() + ".xlsx");
                     })
                     .catch(error => {
                         console.error('Error loading template:', error);

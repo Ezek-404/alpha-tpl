@@ -267,6 +267,9 @@ class CtplIssuanceController extends Controller
     {
         $search = trim($request->query('search'));
         
+        // Kunin ang tab parameter, default sa 'all'
+        $tab = $request->query('tab', 'all');
+
         // Default sa ngayong araw ang from at to kung walang pinili
         $from = $request->query('from', Carbon::today()->format('Y-m-d'));
         $to = $request->query('to', Carbon::today()->format('Y-m-d'));
@@ -280,17 +283,25 @@ class CtplIssuanceController extends Controller
             ->select(
                 'ctpl_issuances.transaction_id as id', 
                 'ctpl_issuances.*', 
-                'vehicles.year_model',     // <-- Idinagdag
-                'vehicles.make',           // <-- Idinagdag
-                'vehicles.series',         // <-- Idinagdag
-                'vehicles.color',          // <-- Idinagdag
+                'vehicles.year_model',         
+                'vehicles.make',               
+                'vehicles.series',             
+                'vehicles.color',              
                 'vehicles.plate_no', 
                 'vehicles.denomination', 
                 'vehicles.file_no as mv_file', 
                 'vehicles.engine_no', 
                 'vehicles.chassis_no', 
-                'coc_table.coc_no'
+                'coc_table.coc_no',
+                'coc_table.class' // <-- Idinagdag para masigurong nakukuha ang class (ISAP/OICP)
             );
+
+        // Filter ayon sa Tab Navigation (ISAP o OICP)
+        if ($tab === 'isap') {
+            $query->where('coc_table.class', 'ISAP');
+        } elseif ($tab === 'oicp') {
+            $query->where('coc_table.class', 'OICP');
+        }
 
         // Filter ayon sa Date Range (From at To)
         if (!empty($from) && !empty($to)) {
@@ -320,10 +331,10 @@ class CtplIssuanceController extends Controller
                     ->withQueryString();
 
         if ($request->ajax()) {
-            return view('ctpl.logs', compact('logs', 'from', 'to'))->render();
+            return view('ctpl.logs', compact('logs', 'from', 'to', 'tab'))->render();
         }
 
-        return view('ctpl.logs', compact('logs', 'from', 'to'));
+        return view('ctpl.logs', compact('logs', 'from', 'to', 'tab'));
     }
 
     public function showResult($id)

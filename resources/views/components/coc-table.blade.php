@@ -38,7 +38,7 @@
                     type="text" 
                     name="search_input"
                     value="{{ $search }}"
-                    placeholder="Search COC number, type, or status..." 
+                    placeholder="Search COC number, type, class, or status..." 
                     class="w-full bg-[#0d1117] text-[#f0f6fc] placeholder-gray-500 border border-[#30363d] rounded-lg px-4 py-1.5 text-xs focus:outline-none focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff]"
                 >
             </div>
@@ -64,6 +64,7 @@
                         <th class="px-6 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">ID</th>
                         <th class="px-6 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">COC Number</th>
                         <th class="px-6 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Vehicle Type</th>
+                        <th class="px-6 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Class</th>
                         <th class="px-6 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Status</th>
                         <th class="px-6 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Created At</th>
                     </tr>
@@ -74,6 +75,7 @@
                         <td class="px-6 py-1 text-xs text-gray-500">{{ $coc->coc_id }}</td>
                         <td class="px-6 py-1 text-xs font-medium text-[#f0f6fc]">{{ $coc->coc_no }}</td>
                         <td class="px-6 py-1 text-xs text-gray-300">{{ $coc->coc_type }}</td>
+                        <td class="px-6 py-1 text-xs text-gray-300 font-medium">{{ $coc->class ?? 'ISAP' }}</td>
                         <td class="px-6 py-1 text-xs">
                             @if(strtolower($coc->coc_status) === 'available')
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#238636]/10 text-[#3fb950] border border-[#238636]/20">
@@ -89,7 +91,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-6 text-center text-xs text-gray-400">
+                        <td colspan="6" class="px-6 py-6 text-center text-xs text-gray-400">
                             No COC records found.
                         </td>
                     </tr>
@@ -125,7 +127,6 @@
             <!-- Header -->
             <div class="flex justify-between items-center mb-4 border-b border-[#30363d] pb-2">
                 <h3 class="text-sm font-semibold text-[#f0f6fc]">Create New COC Series</h3>
-                <!-- Pinalitan ang close action para sumakto sa Alpine state ng parent wrapper -->
                 <button @click="openAddModal = false" class="text-gray-500 hover:text-white transition text-lg">&times;</button>
             </div>
 
@@ -134,9 +135,8 @@
                 @csrf
                 
                 <!-- Dropdown Select para sa COC Type -->
-                <div class="mb-4">
+                <div class="mb-3">
                     <label class="block text-xs text-gray-400 mb-1 font-medium">COC Type</label>
-                    <!-- Idinagdag ang onchange="resetAvailability()" para kung palitan ang type, mag-check ulit -->
                     <select name="coc_type" id="coc_type" required onchange="resetAvailability()" class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff]">
                         <option value="" disabled selected>Select Vehicle Type...</option>
                         <option value="MC">Motorcycle (MC)</option>
@@ -146,11 +146,20 @@
                     </select>
                 </div>
 
+                <!-- Dropdown Select para sa Class (ISAP / OICP) -->
+                <div class="mb-4">
+                    <label class="block text-xs text-gray-400 mb-1 font-medium">Class</label>
+                    <select name="class" id="coc_class" required onchange="resetAvailability()" class="w-full bg-[#0d1117] text-[#f0f6fc] border border-[#30363d] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#58a6ff]">
+                        <option value="" disabled selected>Select Class</option>
+                        <option value="ISAP">ISAP</option>
+                        <option value="OICP">OICP</option>
+                    </select>
+                </div>
+
                 <!-- Range Flex Input Fields -->
                 <div class="grid grid-cols-2 gap-4 mb-3">
                     <div>
                         <label class="block text-xs text-gray-400 mb-1 font-medium">Series Start</label>
-                        <!-- Idinagdag ang resetAvailability() sa oninput -->
                         <input 
                             type="number" 
                             name="series_start" 
@@ -163,7 +172,6 @@
                     </div>
                     <div>
                         <label class="block text-xs text-gray-400 mb-1 font-medium">Series End</label>
-                        <!-- Idinagdag ang resetAvailability() sa oninput -->
                         <input 
                             type="number" 
                             name="series_end" 
@@ -176,7 +184,7 @@
                     </div>
                 </div>
 
-                <!-- Dynamic Alert Block (Para sa Range Warning at Availability Status) -->
+                <!-- Dynamic Alert Block -->
                 <div id="validation-error" class="hidden mb-4 p-2.5 bg-[#da3633]/10 border border-[#da3633]/30 text-[#f85149] rounded-lg text-[11px] flex items-center gap-2">
                     <span id="error-message">Ang Series Start ay hindi pwedeng mas malaki sa Series End.</span>
                 </div>
@@ -190,7 +198,6 @@
                     <button type="button" onclick="handleCheckAvailability()" class="bg-[#21262d] hover:bg-[#30363d] text-gray-300 px-4 py-1.5 rounded-lg text-xs font-semibold transition">
                         Check Availability
                     </button>
-                    <!-- Naka-set sa disabled, opacity-50, at cursor-not-allowed sa simula -->
                     <button type="submit" id="submit-btn" disabled class="bg-[#238636] hover:bg-[#2ea043] text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition opacity-50 cursor-not-allowed">
                         Save Series
                     </button>
@@ -200,7 +207,7 @@
     </div>
 
     <!-- ================= MODAL COMPONENT (DELETE COC SERIES) ================= -->
-    <div x-show="openDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" x-cloak>
+    <div x-show="openDeleteModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div class="relative w-full max-w-md bg-[#161b22] border border-[#30363d] rounded-xl shadow-2xl overflow-hidden p-6 text-[#f0f6fc]">
             
             <!-- Header -->
@@ -272,10 +279,8 @@
 
 <!-- JavaScript Logic at CSS Overrides -->
 <script>
-    // State tracker kung na-check na ba sa DB ang control numbers
     let isCheckedAndAvailable = false;
 
-    // Live validation function habang nag-eencode ang user
     function checkLiveSeriesRange() {
         const startInput = document.getElementById('series_start').value;
         const endInput = document.getElementById('series_end').value;
@@ -296,7 +301,6 @@
         return true;
     }
 
-    // Awtomatikong ibinabalik sa disabled ang Save button kapag may binagong input ang user
     function resetAvailability() {
         isCheckedAndAvailable = false;
         document.getElementById('availability-success').classList.add('hidden');
@@ -306,9 +310,9 @@
         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
     }
 
-    // Function kapag pinindot ang Check Availability (Ikandinabit na sa totoong API)
     function handleCheckAvailability() {
         const typeInput = document.getElementById('coc_type').value;
+        const classInput = document.getElementById('coc_class').value;
         const startInput = document.getElementById('series_start').value;
         const endInput = document.getElementById('series_end').value;
         const errorDiv = document.getElementById('validation-error');
@@ -316,22 +320,19 @@
         const successDiv = document.getElementById('availability-success');
         const submitBtn = document.getElementById('submit-btn');
 
-        // Validation 1: Siguraduhing may laman lahat ng inputs
-        if (!typeInput || !startInput || !endInput) {
-            errorMsg.innerText = "Mangyaring punan ang COC Type, Series Start, at Series End bago mag-check.";
+        if (!typeInput || !classInput || !startInput || !endInput) {
+            errorMsg.innerText = "Mangyaring punan ang COC Type, Class, Series Start, at Series End bago mag-check.";
             errorDiv.classList.remove('hidden');
             return;
         }
 
-        // Validation 2: Siguraduhing valid ang range
         if (!checkLiveSeriesRange()) return;
 
-        // I-reset ang states bago mag-fetch request
         errorDiv.classList.add('hidden');
         successDiv.classList.add('hidden');
 
-        // Tinanggal ang '/api' at ginawang '/check-coc-availability' para tumugma sa web.php
-        fetch(`/check-coc-availability?start=${startInput}&end=${endInput}`, {
+        // Isinama na ang classInput sa query string parameter ng fetch URL
+        fetch(`/check-coc-availability?start=${startInput}&end=${endInput}&class=${classInput}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -346,12 +347,10 @@
         })
         .then(data => {
             if (!data.available) {
-                // Kapag existing na sa database (Used man o Available), babalaan ang user
                 errorMsg.innerHTML = `<strong>Hindi Pwede:</strong> ${data.message}`;
                 errorDiv.classList.remove('hidden');
                 resetAvailability();
             } else {
-                // Kapag malinis at walang kapareho, i-enable na ang Save Series button
                 isCheckedAndAvailable = true;
                 successDiv.classList.remove('hidden');
                 submitBtn.disabled = false;
@@ -360,13 +359,12 @@
         })
         .catch(err => {
             console.error(err);
-            errorMsg.innerText = "May naganap na error sa pag-check sa database. Siguraduhing na-save mo ang route sa routes/web.php.";
+            errorMsg.innerText = "May naganap na error sa pag-check sa database.";
             errorDiv.classList.remove('hidden');
             resetAvailability();
         });
     }
 
-    // Pangwakas na harang sa form bago tuluyang ipadala ang data sa store method
     function validateCocSeries(event) {
         if (!isCheckedAndAvailable) {
             event.preventDefault();
@@ -406,7 +404,6 @@
             event.preventDefault();
             return false;
         }
-        // Kumpirmasyon bago bitayin ang pagbura
         return confirm('Sigurado ka ba na nais mong BURAHIN ang serye ng COC na ito? Hindi na ito mababawi kailanman.');
     }
 
@@ -414,17 +411,15 @@
         const successAlert = document.getElementById('flash-success-alert');
         if (successAlert) {
             setTimeout(() => {
-                // Dahan-dahang itatago bago tuluyang tanggalin sa screen
                 successAlert.style.opacity = '0';
                 successAlert.style.transition = 'opacity 0.5s ease';
                 setTimeout(() => successAlert.remove(), 500);
-            }, 5000); // Mawawala pagkatapos ng 5 segundo
+            }, 5000);
         }
     });
 </script>
 
 <style>
-    /* Naka-imbak na custom layout parameters */
     .custom-pagination-container nav > div:first-child {
         display: none !important;
     }
@@ -449,7 +444,7 @@
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        font-size: 11px !important;       
+        font-size: 11px !important;      
         padding: 2px 6px !important;      
         color: #8b949e !important;        
         border-radius: 0px !important;
@@ -481,5 +476,8 @@
     html::-webkit-scrollbar, 
     body::-webkit-scrollbar {
         display: none;
+    }
+    [x-cloak] {
+        display: none !important;
     }
 </style>

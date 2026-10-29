@@ -9,21 +9,22 @@ class CocController extends Controller
 {
     public function index(Request $request)
     {
-        // Kukunin ang search keyword mula sa URL string
+        // Kukunin ang search keyword mula sa URL string[cite: 15]
         $search = $request->input('search', '');
 
-        // Query papuntang database na may pagination (10 items per page)
+        // Query papuntang database na may pagination (10 items per page)[cite: 15]
         $cocs = DB::table('coc_table')
             ->where(function($query) use ($search) {
                 if (!empty($search)) {
                     $query->where('coc_no', 'like', '%' . $search . '%')
                           ->orWhere('coc_type', 'like', '%' . $search . '%')
+                          ->orWhere('class', 'like', '%' . $search . '%') // <-- Idinagdag para masama ang ISAP/OICP sa pag-search
                           ->orWhere('coc_status', 'like', '%' . $search . '%');
                 }
             })
             ->orderBy('coc_id', 'desc')
             ->paginate(10)
-            ->withQueryString(); // Pinapanatili ang URL parameters sa tuwing lilipat ng page
+            ->withQueryString(); // Pinapanatili ang URL parameters sa tuwing lilipat ng page[cite: 15]
 
         return view('coc.index', compact('cocs', 'search'));
     }
@@ -41,7 +42,7 @@ class CocController extends Controller
                 ], 400);
             }
 
-            // PINALITAN: Mula 'cocs' ginawang 'coc_table'
+            // Sinusuri ang buong database anuman ang class para maiwasan ang duplicate coc_no
             $exists = DB::table('coc_table')
                 ->whereBetween('coc_no', [$start, $end])
                 ->exists();
@@ -49,7 +50,7 @@ class CocController extends Controller
             if ($exists) {
                 return response()->json([
                     'available' => false, 
-                    'message' => 'May umiiral na (existing) COC number sa range na ito.'
+                    'message' => 'May umiiral na (existing) COC number sa range na ito sa database.'
                 ]);
             }
 
@@ -73,6 +74,7 @@ class CocController extends Controller
     {
         $request->validate([
             'coc_type' => 'required|in:MC,PC,TC,CV',
+            'class' => 'required|in:ISAP,OICP',
             'series_start' => 'required|integer',
             'series_end' => 'required|integer|gte:series_start',
         ]);
@@ -80,38 +82,38 @@ class CocController extends Controller
         $start = $request->series_start;
         $end = $request->series_end;
         $type = $request->coc_type;
+        $class = $request->class;
 
-        // PINALITAN: Mula 'cocs' ginawang 'coc_table'
+        // Sinisigurong walang kaparehong coc_no sa buong database
         $exists = DB::table('coc_table')
             ->whereBetween('coc_no', [$start, $end])
             ->exists();
 
         if ($exists) {
             return redirect()->back()->withErrors([
-                'series_start' => 'Hindi natuloy ang pag-save dahil may umiiral na COC sa range na pinili mo.'
+                'series_start' => 'Hindi natuloy ang pag-save dahil may umiiral nang COC number sa range na ito sa database.'
             ])->withInput();
         }
 
-        DB::transaction(function () use ($start, $end, $type) {
+        DB::transaction(function () use ($start, $end, $type, $class) {
             $data = [];
             for ($i = $start; $i <= $end; $i++) {
                 $data[] = [
                     'coc_no' => $i,
                     'coc_type' => $type,
+                    'class' => $class,
                     'coc_status' => 'Available',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
 
                 if (count($data) === 500) {
-                    // PINALITAN: Mula 'cocs' ginawang 'coc_table'
                     DB::table('coc_table')->insert($data);
                     $data = [];
                 }
             }
 
             if (count($data) > 0) {
-                // PINALITAN: Mula 'cocs' ginawang 'coc_table'
                 DB::table('coc_table')->insert($data);
             }
         });
